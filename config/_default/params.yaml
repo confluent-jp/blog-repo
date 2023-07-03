@@ -45,7 +45,7 @@ header:
 
 footer:
   copyright:
-    notice: '© {year} Me. This work is licensed under {license}'
+    notice: '© {year} Confluent Japan Community. This work is licensed under {license}'
     license:
       enable: true
       allow_derivatives: false
@@ -57,7 +57,7 @@ footer:
 locale:
   date_format: 'Jan 2, 2006'
   time_format: '3:04 PM'
-  address_format: en-us
+  address_format: ja-jp
 
 # Site features
 
