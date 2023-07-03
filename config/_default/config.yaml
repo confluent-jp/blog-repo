@@ -3,7 +3,7 @@
 # Hugo Documentation: https://gohugo.io/getting-started/configuration/#all-configuration-settings
 # This file is formatted using YAML syntax - learn more at https://learnxinyminutes.com/docs/yaml/
 
-title: Confluent Japan Community # Website name
+title: Confluent Japan Community Site # Website name
 baseURL: 'https://confluent-jp.github.com/' # Website URL
 
 ############################
