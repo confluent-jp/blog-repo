@@ -5,7 +5,6 @@ summary: KIP-932として登録されているQueues for Kafka。「Kafkaはメ�
 authors:
   - hashi
 tags:
-  - KIP
   - Stream Processing
   - Scalability
 categories: 

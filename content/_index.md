@@ -15,7 +15,7 @@ sections:
 
         <!--Custom spacing-->
         <div class="mb-5"></div>
-        このコミュニティはConfluentエンジニアならびにユーザー有志によるコミュニティです。ConfluentやKafkaエコシステムに関わる日本語の情報発信と共有を目的としています。
+        このコミュニティはConfluentエンジニアならびにユーザー有志によるコミュニティです。ConfluentやKafkaエコシステムに関わる日本語の情報発信と共有を目的としています。(現在ベータ運用中)
     design:
       background:
         gradient_end: '#040531'
@@ -28,7 +28,7 @@ sections:
       subtitle: ''
       text: ''
       # Choose how many pages you would like to display (0 = all pages)
-      count: 5
+      count: 3
       # Filter on criteria
       filters:
         folders:
@@ -53,7 +53,7 @@ sections:
     content:
       title: Talks
       # Choose how many pages you would like to display (0 = all pages)
-      count: 5
+      count: 3
       filters:
         folders:
           - talk

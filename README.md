@@ -25,8 +25,8 @@ http://localhost:1313/confluent-jp/ にアクセス。
 - date - 未来日付を入れておくとその日に公開されます。
 - lastmod - 登録時の自動更新等は無いです。更新時は面倒ですが毎回```lastmod```の更新をお願いします。
 - category - 厳密なリストではありませんが、以下の中から該当を記載してください。あまり増やすものでもありませんが、足していただいても結構です。
-    - type - Blog or Announcement
-    - area - Kafka Core, Kafka Connect, KSQL, Flink, Schema Registry, Confluent for Kubernetes, etc.
+    - type - Blog or Announcement or Note (ショート)
+    - area - KIP, Kafka Core, Kafka Connect, KSQL, Flink, Schema Registry, Confluent for Kubernetes, etc.
 - tag - categoryよりは自由に足してください。
 - ブログに関する画像を何か、featured.png (featured.jpg) という名前で同じフォルダに保存してください。プレビューとブログ本文と、それぞれ自動的にリサイズされたものが表示されます。
 - 追加画像その他の利用方法はサンプルを参照してください。
