@@ -15,7 +15,7 @@ sections:
 
         <!--Custom spacing-->
         <div class="mb-5"></div>
-        このコミュニティはConfluentエンジニアならびにユーザー有志によるコミュニティです。ConfluentやKafkaエコシステムに関わる日本語の情報発信と共有を目的としています。(現在ベータ運用中)
+        このコミュニティはConfluentエンジニアならびにユーザー有志によるコミュニティです。ConfluentやKafkaエコシステムに関わる日本語の情報発信と共有を目的としています。(ベータ運用中)
     design:
       background:
         gradient_end: '#040531'
@@ -91,9 +91,7 @@ sections:
           tag: Confluent Cloud
     design:
       columns: '2'
-      view: showcase
-      # For Showcase view, flip alternate rows?
-      flip_alt_rows: false
+      view: Card
   - block: collection
     id: publication
     content:
@@ -101,13 +99,20 @@ sections:
       filters:
         folders:
           - publication
-        featured_only: true
+        featured_only: false
+      count: 4
     design:
-      columns: '2'
-      view: card
+      columns: '1'
+      view: showcase
+      # For Showcase view, flip alternate rows?
+      flip_alt_rows: true
+      archive:
+        enable: true
+        text: 全てのエントリ
+        link: publication/
   - block: tag_cloud
     content:
       title: Tag Cloud
     design:
-      columns: '2'
+      columns: '1'
 ---
