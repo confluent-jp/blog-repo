@@ -1,6 +1,6 @@
 ---
 title: I ❤️ Logs
-summary: "Confluent CEOであるJay Krepsによる、Kafkaの背景にある概念とログに関するアーキテクチャに関する考察です。 (英語)"
+summary: "Confluent CEOであるJay Krepsによる、Kafkaの背景にある概念とログやストリーム処理アーキテクチャに関する考察です。 (英語)"
 authors:
   - hashi
 tags:

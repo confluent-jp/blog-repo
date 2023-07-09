@@ -101,18 +101,19 @@ sections:
           - publication
         featured_only: false
       count: 4
+      archive:
+        enable: true
+        text: 全てのエントリ
+        link: publication/
     design:
       columns: '1'
       view: showcase
       # For Showcase view, flip alternate rows?
       flip_alt_rows: true
-      archive:
-        enable: true
-        text: 全てのエントリ
-        link: publication/
   - block: tag_cloud
     content:
       title: Tag Cloud
+      count: 20
     design:
       columns: '1'
 ---

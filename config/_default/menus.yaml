@@ -15,3 +15,7 @@ main:
   - name: Demo
     url: '#demo'
     weight: 40
+  - name: Publication
+    url: '#publication'
+    weight: 50
+    

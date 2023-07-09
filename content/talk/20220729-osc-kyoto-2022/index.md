@@ -2,7 +2,7 @@
 title: イベントストリーミング入門 〜Apache Kafkaを活用した大規模リアルタイムデータ処理〜
 summary: "OSC Kyoto Online 2022の発表資料です。初心者向けにApache Kafkaの概要を解説しています。"
 authors:
-  - admin
+  - akio
 tags:
   - Slide
   - Recording

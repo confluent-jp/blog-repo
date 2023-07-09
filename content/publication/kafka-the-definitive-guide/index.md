@@ -8,7 +8,7 @@ tags:
   - Kafka Core
   - Kafka Connect
   - Stream Processing
-date: '2017-10-3T00:00:00Z'
+date: '2017-10-03T00:00:00Z'
 featured: true
 
 links:

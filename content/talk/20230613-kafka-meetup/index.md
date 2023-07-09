@@ -2,7 +2,7 @@
 title: 	Apache Kafka 最新アップデート ~ What's New & What's Next
 summary: "Kafka Meetup JP #13 - Apache Kafka Meetup Japan #13の発表資料です。2023年6月16日(JST)時点での、Apache Kafkaのアップデートやロードマップを紹介しています。"
 authors:
-  - admin
+  - akio
 tags:
   - Slide
   - Kafka Update
