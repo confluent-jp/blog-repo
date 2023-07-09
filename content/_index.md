@@ -10,7 +10,7 @@ sections:
     content:
       title: Welcome to Confluent Japan Community
       image:
-        filename: confluent-logo.png
+        filename: confluent-developer-logo.png
       text: |-
 
         <!--Custom spacing-->
