@@ -13,7 +13,7 @@ git clone https://github.com/confluent-jp/blog-repo.git
 cd blog-repo
 hugo server
 ```
-http://localhost:1313/confluent-jp/ にアクセス。
+http://localhost:1313/community/ にアクセス。
 
 ## User
 ```content/author``` 配下にユーザーIDによるフォルダを作成の上、```index.md```を配置。併せて画像ををavatar.png (avatar.jpg) という名前で設置するとポートレイトも足せます。 (是非登録してください。)
