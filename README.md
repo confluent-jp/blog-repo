@@ -44,7 +44,7 @@ http://localhost:1313/community/ にアクセス。
     hugo mod tidy
     ```
 3. config.yamlを元に戻して保存。その後```hugo server```を再実行。
-参考：![failed to resolve output format "headers" from site config の対処] (https://zenn.dev/meihei/articles/32bb275f71e938)
+参考：[failed to resolve output format "headers" from site config の対処](https://zenn.dev/meihei/articles/32bb275f71e938)
 
 
 
