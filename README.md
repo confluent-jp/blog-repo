@@ -31,4 +31,20 @@ http://localhost:1313/community/ にアクセス。
 - ブログに関する画像を何か、featured.png (featured.jpg) という名前で同じフォルダに保存してください。プレビューとブログ本文と、それぞれ自動的にリサイズされたものが表示されます。
 - 追加画像その他の利用方法はサンプルを参照してください。
 
+## Note
+### hugo server error
+![hugo server error](assets/media/readme/hugo-error.png)
+```hugo server``` でローカルサーバ起動時にエラーが発生する場合は以下の手順を実行：
+1. ```config.yaml```の該当セクション (```output.home```)の配列から```WebAppManifest```、```headers```、```redirects```を一旦抜いて保存。
+2. 以下のコマンドを実行してhugoモジュールの再構築
+    
+    ```bash
+    hugo mod clean
+    hugo mod get -u ./...
+    hugo mod tidy
+    ```
+3. config.yamlを元に戻して保存。その後```hugo server```を再実行。
+参考：![failed to resolve output format "headers" from site config の対処] (https://zenn.dev/meihei/articles/32bb275f71e938)
+
+
 
