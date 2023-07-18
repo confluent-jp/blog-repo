@@ -1,6 +1,6 @@
 
 ## Reference
-blog Repo：　https://github.com/confluent-jp/blog-repo
+blog Repo：　https://github.com/confluent-jp/community
 
 オリジナルRepo: https://github.com/wowchemy/starter-hugo-academic
 
