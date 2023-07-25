@@ -26,8 +26,11 @@ bio: Field CTO
 
 # Interests to show in About widget
 interests:
+  - Analytics
+  - Open Source
+  - Cloud
   - Stream Processing
-  - Industry IoT
+  - Industrial IoT
   - Crypto Currency
 
 social:
