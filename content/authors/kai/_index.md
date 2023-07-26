@@ -14,7 +14,7 @@ status:
 superuser: false
 
 # Role/position/tagline
-role: Writer, Confluent
+role: Writer - Global Field CTO
 
 # Organizations/Affiliations to show in About widget
 organizations:

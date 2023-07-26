@@ -14,7 +14,7 @@ status:
 superuser: true
 
 # Role/position/tagline
-role: Admin, Confluent
+role: Admin - Senior Solutions Engineer
 
 # Organizations/Affiliations to show in About widget
 organizations:
