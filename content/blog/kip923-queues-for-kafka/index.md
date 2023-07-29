@@ -14,11 +14,6 @@ categories:
 projects: []
 date: '2023-06-30T00:00:00Z'
 lastmod: '2023-06-30T00:00:00Z'
-draft: false
-featured: false
-image:
-  caption: ''
-  focal_point: ''
 ---
 
 ## はじめに

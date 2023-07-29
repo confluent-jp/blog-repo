@@ -13,11 +13,6 @@ categories:
 projects: []
 date: '2023-07-03T00:00:00Z'
 lastmod: '2023-07-03T00:00:00Z'
-draft: false
-featured: false
-image:
-  caption: ''
-  focal_point: ''
 ---
 ## はじめに
 メッセージブローカー界隈でのデリバリー保証はAt Least Once (必ず送信するが1度以上送信する可能性がある) というのが常識であり、データを受け取るConsumer側で冪等性を保証する必要がありました。そのExactly Once SemantisがKafkaでサポートされた時には多くの反響を呼びましたが、この設定は最近DefaultでOnになる程Kafkaコミュニティでは広く利用されています。
