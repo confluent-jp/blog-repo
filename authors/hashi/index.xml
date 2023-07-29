@@ -1,4 +1,40 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>hashi | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/authors/hashi/</link><atom:link href="https://confluent-jp.github.io/community/authors/hashi/index.xml" rel="self" type="application/rss+xml"/><description>hashi</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Mon, 17 Jul 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/authors/hashi/avatar_hudc0c7c8d0c95e5f09e296b73be3a2ab5_129312_270x270_fill_q75_lanczos_center.jpg</url><title>hashi</title><link>https://confluent-jp.github.io/community/authors/hashi/</link></image><item><title>When NOT to use Apache Kafka?</title><link>https://confluent-jp.github.io/community/blog/when-not-to-use-kafka/</link><pubDate>Mon, 17 Jul 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/when-not-to-use-kafka/</guid><description>&lt;blockquote>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>hashi | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/authors/hashi/</link><atom:link href="https://confluent-jp.github.io/community/authors/hashi/index.xml" rel="self" type="application/rss+xml"/><description>hashi</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Sat, 29 Jul 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/authors/hashi/avatar_hudc0c7c8d0c95e5f09e296b73be3a2ab5_129312_270x270_fill_q75_lanczos_center.jpg</url><title>hashi</title><link>https://confluent-jp.github.io/community/authors/hashi/</link></image><item><title>Streaming Audio - Kafkaに本当にあった(まだある)ヤバいバグ5選</title><link>https://confluent-jp.github.io/community/blog/streaming-audio-worst-kafka-bugs/</link><pubDate>Sat, 29 Jul 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/streaming-audio-worst-kafka-bugs/</guid><description>&lt;h2 id="はじめに">はじめに&lt;/h2>
+&lt;p>&lt;a href="https://www.youtube.com/watch?v=yFlvWRwRTT8&amp;amp;list=PLa7VYi0yPIH1B0i7mhzVi78TIkKSd-0vE" target="_blank" rel="noopener">Streaming Audio&lt;/a>はConfluentがPodcast&amp;amp;YouTubeシリーズとして提供しています。毎回ゲストを迎え様々なトピックについてフリーにディスカッションするポッドキャストで、Kafka初期開発メンバーのJun RaoやKRaftの開発メンバー、Kafkaのリアルユーザー等様々なゲストスピーカーが参加します。中でも「アナネキ」ことAnna McDonald (Technical Voice of CUstomer @Confluent)登場回は毎回必見で、いつも何か新しい発見があります。&lt;/p>
+&lt;p>今回はその彼女の登場回の中でも最も最近の回のご紹介です：お題は「Kafkaに本当にあったヤバいバグ5選&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>」です。(オリジナルの公開は2022/12/21) このトークで紹介されたJIRAバグの一覧を用意しました。結構最近になってようやく入ったものや、まだ直っていないものもあります。Kafkaのバージョンはなるべく追従する事を強くお勧めしていますが、ここにあるのは全体の一部で、なかなかに怖いバグへの修正も入っています。&lt;/p>
+&lt;p>あなたのKafkaクラスタはほんとに大丈夫です？&lt;/p>
+&lt;h4 id="kafka-10888-sticky-partition-leads-to-uneven-product-msg-resulting-in-abnormal-delays-in-some-partitionshttpsissuesapacheorgjirabrowsekafka-10888">&lt;a href="https://issues.apache.org/jira/browse/KAFKA-10888" target="_blank" rel="noopener">KAFKA-10888: Sticky partition leads to uneven product msg, resulting in abnormal delays in some partitions&lt;/a>&lt;/h4>
+&lt;blockquote>
+&lt;p>Status: Resolved (3.0.0)&lt;/p>
+&lt;/blockquote>
+&lt;p>Sticky Partitionerを使用時、Partition間の処理数に大きな偏りが出る様な状況となり特定のPartitionのスループットが極端に下がる事がある: 場合によってはリカバリ不能なほどProducer側のバッチが肥大化する。&lt;/p>
+&lt;h4 id="kafka-9648-add-configuration-to-adjust-listen-backlog-size-for-acceptorhttpsissuesapacheorgjirabrowsekafka-9648">&lt;a href="https://issues.apache.org/jira/browse/KAFKA-9648" target="_blank" rel="noopener">KAFKA-9648: Add configuration to adjust listen backlog size for Acceptor&lt;/a>&lt;/h4>
+&lt;blockquote>
+&lt;p>Status: Resolved (3.2.0)&lt;/p>
+&lt;/blockquote>
+&lt;p>OSがLinuxの場合に発生。ローリングアップグレード等の際、BrokerからPartition Leaderが他のBrokerに移る、もしくは移ったのちに元のBrokerに戻る (Preferred Leader Election) が発生。この際Partitionに関するメタデータ更新が行われる為これらPartitionを参照するクライアントから一斉に再接続のリクエストが送られる。状況によってはLinuxのSYN cookieの機能が動きTCPバッファーが制限されスループットが大幅に低下する。これは再接続しない限り復旧しない。&lt;/p>
+&lt;h4 id="kafka-12686-race-condition-in-alterisr-response-handlinghttpsissuesapacheorgjirabrowsekafka-12686">&lt;a href="https://issues.apache.org/jira/browse/KAFKA-12686" target="_blank" rel="noopener">KAFKA-12686: Race condition in AlterIsr response handling&lt;/a>&lt;/h4>
+&lt;blockquote>
+&lt;p>Status: Resolved (3.0.0)&lt;/p>
+&lt;/blockquote>
+&lt;p>Partition.scala内の処理において、AlterIsrResponseとLeaderAndIsrRequestのレースコンディションが起因。クラスタサイズが小さくPartition数が多い場合、Brokerノードの変更時に大量のPartition変更が発生する。この際AlterIsrManagerがペンディング状態のリクエストをクリアしてしまう為、AlterIsrResponseが戻ってきた際に処理中 (in Flight) であるのに処理タスク (Pending) が無いという矛盾状態が発生する。&lt;/p>
+&lt;h4 id="kafka-12964-corrupt-segment-recovery-can-delete-new-producer-state-snapshotshttpsissuesapacheorgjirabrowsekafka-12964">&lt;a href="https://issues.apache.org/jira/browse/KAFKA-12964" target="_blank" rel="noopener">KAFKA-12964: Corrupt segment recovery can delete new producer state snapshots&lt;/a>&lt;/h4>
+&lt;blockquote>
+&lt;p>Status: Resolved (3.0.0)&lt;/p>
+&lt;/blockquote>
+&lt;p>Brokerの停止時、猶予時間内に終了しない場合には Unclearn Shutdownと判断される。この際Broker復帰時に残っていたセグメントは不要と判断され非同期で削除が実行される。この削除が完了する前に同じオフセットのセグメントが書き込まれる状態となると、新しいProducer Stateスナップショットが誤って削除される事がある。&lt;/p>
+&lt;h4 id="kafka-14334-delayedfetch-purgatory-not-completed-when-appending-as-followerhttpsissuesapacheorgjirabrowsekafka-14334">&lt;a href="https://issues.apache.org/jira/browse/KAFKA-14334" target="_blank" rel="noopener">KAFKA-14334: DelayedFetch purgatory not completed when appending as follower&lt;/a>&lt;/h4>
+&lt;blockquote>
+&lt;p>Status: Resolved (3.4.0, 3.3.2)&lt;/p>
+&lt;/blockquote>
+&lt;p>ConsumerがPulgatoryからフェッチするケースにおいて、通常通りPartitionリーダーからフェッチする場合には正しくフェッチの完了が認識される。しかしConsumerがフォローワーがフェッチする設定としている(&lt;a href="https://cwiki.apache.org/confluence/display/KAFKA/KIP-392%3A&amp;#43;Allow&amp;#43;consumers&amp;#43;to&amp;#43;fetch&amp;#43;from&amp;#43;closest&amp;#43;replica" target="_blank" rel="noopener">KIP-932&lt;/a>)場合、フォローワーのPartitionはPulgatoryに存在しない為フェッチ出来ずタイムアウトする。&lt;/p>
+&lt;div class="footnotes" role="doc-endnotes">
+&lt;hr>
+&lt;ol>
+&lt;li id="fn:1">
+&lt;p>オリジナルは6選であり、ここではそのうち&lt;a href="https://issues.apache.org/jira/browse/KAFKA-9211" target="_blank" rel="noopener">KAFKA-9211: Kafka upgrade 2.3.0 may cause tcp delay ack(Congestion Control)&lt;/a>も含んでいますが、トークの中ではKafka-9646の中で合わせて語られているので割愛しました。&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;/div></description></item><item><title>When NOT to use Apache Kafka?</title><link>https://confluent-jp.github.io/community/blog/when-not-to-use-kafka/</link><pubDate>Mon, 17 Jul 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/when-not-to-use-kafka/</guid><description>&lt;blockquote>
 &lt;p>このブログエントリはConfluent Field CTOである&lt;a href="https://www.kai-waehner.de/" target="_blank" rel="noopener">Kai Waeehner&lt;/a>のサイトで2022/1/4に公開された &lt;a href="https://www.kai-waehner.de/blog/2022/01/04/when-not-to-use-apache-kafka/" target="_blank" rel="noopener">When NOT to use Apache Kafka?&lt;/a>の日本語訳です。Kai本人の了承を得て翻訳/公開しています。&lt;/p>
 &lt;/blockquote>
 &lt;p>Apache Kafkaは、Data in Motionにおけるイベントストリーミングのデファクトスタンダードです。あらゆる業界でその採用が大きく伸びているため、私は毎週のように『ではApache Kafkaを使うべきでは無いのはどんな場合？』『ストリーム処理の基盤に重要な要素は？』『kafkaにこの機能性が無いのはなぜ？』『Kafkaを採用しないと判断する為の条件とは？』という質問を受けます。このブログ記事では、Kafkaを使うべき時、Kafkaを使うべきでない時、そしてKafkaを使うべきかもしれない時について順番に説明します。&lt;/p>
