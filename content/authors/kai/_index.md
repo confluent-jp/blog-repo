@@ -22,7 +22,7 @@ organizations:
     url: https://www.confluent.io/
 
 # Short bio (displayed in user profile at end of posts)
-bio: Field CTO
+bio: Global Field CTO
 
 # Interests to show in About widget
 interests:

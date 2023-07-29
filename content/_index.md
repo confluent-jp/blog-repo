@@ -15,7 +15,7 @@ sections:
 
         <!--Custom spacing-->
         <div class="mb-5"></div>
-        このコミュニティはConfluentエンジニアならびにユーザー有志によるコミュニティです。ConfluentやKafkaエコシステムに関わる日本語の情報発信と共有を目的としています。(ベータ運用中)
+        このコミュニティはConfluentエンジニアならびにユーザー有志によるコミュニティです。ConfluentやKafkaエコシステムに関わる日本語の情報発信と共有を目的としています。
     design:
       background:
         gradient_end: '#040531'
