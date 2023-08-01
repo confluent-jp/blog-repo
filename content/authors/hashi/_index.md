@@ -22,14 +22,13 @@ organizations:
     url: https://www.confluent.io/
 
 # Short bio (displayed in user profile at end of posts)
-bio: Manager, Solutions Engineering, Korea/Japan
+bio: 畑Noob
 
 # Interests to show in About widget
 interests:
   - Stream Processing
   - Event Driven Architecture
-  - Kafka Streams
-  - Flink
+  - 緑肥 (green manure)
 
 
 social:

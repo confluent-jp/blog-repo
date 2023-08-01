@@ -26,8 +26,8 @@ bio: Kafka Wizard
 
 # Interests to show in About widget
 interests:
-  - Kafka Core
-  - Programming
+  - Writing newsletters (2 Minutes Streaming)
+  - Studying macroeconomics and finance
 
 social:
   - icon: twitter
