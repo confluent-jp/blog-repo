@@ -7,10 +7,10 @@ authors:
 tags:
   - Stream Processing
   - Scalability
+  - KIP
 categories: 
   - Blog
   - Kafka Core
-  - KIP
 projects: []
 date: '2023-06-30T00:00:00Z'
 lastmod: '2023-06-30T00:00:00Z'

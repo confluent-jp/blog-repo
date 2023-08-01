@@ -5,12 +5,12 @@ authors:
   - kai
   - hashi
 tags:
-  - Use Cases
   - Edge computing
   - IoT
+  - Translated
 categories: 
   - Blog
-  - Translated
+  - Use Cases
 projects: []
 date: '2023-07-17T00:00:00Z'
 lastmod: '2023-07-17T00:00:00Z'

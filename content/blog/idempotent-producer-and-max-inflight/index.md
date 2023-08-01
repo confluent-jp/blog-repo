@@ -6,10 +6,10 @@ authors:
   - hashi
 tags:
   - Exactly Once Semantics
+  - KIP
 categories: 
   - Blog
   - Kafka Core
-  - KIP
 projects: []
 date: '2023-07-03T00:00:00Z'
 lastmod: '2023-07-03T00:00:00Z'

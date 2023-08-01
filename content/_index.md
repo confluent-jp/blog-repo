@@ -46,7 +46,7 @@ sections:
         link: blog/
     design:
       # Choose a layout view
-      view: showcase
+      view: card
       columns: '2'
   - block: collection
     id: talk
