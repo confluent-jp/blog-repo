@@ -22,11 +22,11 @@ organizations:
     url: https://www.confluent.io/
 
 # Short bio (displayed in user profile at end of posts)
-bio: Kafka Wizard
+bio: Kafka Committer/Staff Software Engineer
 
 # Interests to show in About widget
 interests:
-  - Writing newsletters (2 Minutes Streaming)
+  - Writing newsletters ([2 Minutes Streaming](https://2minutestreaming.com/))
   - Studying macroeconomics and finance
 
 social:
