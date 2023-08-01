@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>stanislav | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/authors/stanislav/</link><atom:link href="https://confluent-jp.github.io/community/authors/stanislav/index.xml" rel="self" type="application/rss+xml"/><description>stanislav</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Tue, 01 Aug 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/authors/stanislav/avatar_hu1077115a2f9cfc94b30f1a5a2f093bdf_38680_270x270_fill_q75_lanczos_center.jpeg</url><title>stanislav</title><link>https://confluent-jp.github.io/community/authors/stanislav/</link></image><item><title>Kafka Acks再入門</title><link>https://confluent-jp.github.io/community/blog/kafka-acks-explained/</link><pubDate>Tue, 01 Aug 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/kafka-acks-explained/</guid><description>&lt;blockquote>
+&lt;p>このブログエントリはKafkaコミッタである Stanislav Kozlovski(&lt;a href="https://https://twitter.com/BdKozlovski" target="_blank" rel="noopener">𝕏&lt;/a>|&lt;a href="https://www.linkedin.com/in/stanislavkozlovski/" target="_blank" rel="noopener">Ln&lt;/a>) のサイトで2022/11/06に公開された&lt;a href="https://www.linkedin.com/pulse/kafka-acks-explained-stanislav-kozlovski/" target="_blank" rel="noopener">Kafka Acks Explained&lt;/a>の日本語訳です。Stanislav本人の了承を得て翻訳/公開しています。&lt;/p>
+&lt;/blockquote>
+&lt;p>Kafkaに関する仕事を始めて4年になりますが、経験上未だに2つの設定について広く誤解されていると感じる事があります。それは&lt;code>acks&lt;/code>と&lt;code>min.insync.replicas&lt;/code>であり、さらにはこの2つの設定がどう影響し合うかについてです。このエントリはこの非常に重要な2つの誤解を解き、適切に理解してもらう事を目的としています。&lt;/p>
+&lt;h1 id="replication">Replication&lt;/h1>
+&lt;p>この2つの設定を理解するためにはまずKafka Replicationプロトコルについて少しおさらいする必要があります。&lt;/p>
+&lt;p>このブログの読者の皆さんはある程度Kafkaについてご存知だと想定しています - もし自信がない場合はぜひ&lt;a href="https://medium.com/hackernoon/thorough-introduction-to-apache-kafka-6fbf2989bbc1" target="_blank" rel="noopener">Thorough Introduction to Apache Kafka&lt;/a>もご参照ください。&lt;/p>
+&lt;p>各Partitionには1つのLeader Broker(1)と複数のFollower Broker(N)がアサインされます。この複製の数は&lt;code>replication.factor&lt;/code>で設定する事ができ(1+N)つまり総数を表します。つまりこの設定では「対象となるPartitionに対してクラスタ上で何個の複製が出来るか」を指定します。&lt;/p>
+&lt;p>デフォルトであり通常推奨する設定値は&lt;code>3&lt;/code>です。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="Replication Factor" srcset="
+/community/media/blogs/kafka-acks-explained/replication-factor_hu30e3aabf839789c5bf75a3316f94b6c4_21497_0d1ca0052156cf2b9740e68dcdd4c65a.webp 400w,
+/community/media/blogs/kafka-acks-explained/replication-factor_hu30e3aabf839789c5bf75a3316f94b6c4_21497_f54bf205681a70abfa295c3277922d09.webp 760w,
+/community/media/blogs/kafka-acks-explained/replication-factor_hu30e3aabf839789c5bf75a3316f94b6c4_21497_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-acks-explained/replication-factor_hu30e3aabf839789c5bf75a3316f94b6c4_21497_0d1ca0052156cf2b9740e68dcdd4c65a.webp"
+width="760"
+height="203"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+ProducerクライアントはLeader Brokerにのみ書き込みに行きます - つまりFollower Brokerへのレプリケーションは非同期に行われます。ここで分散システムとして考慮しないといけないのは、何かしらの方法で「これらレプリケーションされる処理がどのようにLeaderに追従すべきか」を指定する方法です。具体的には「Leaderに書き込まれた更新がFollowerにも反映されているか否か」です。&lt;/p>
+&lt;h1 id="in-sync-replicas">In-Sync Replicas&lt;/h1>
+&lt;p>in-sync replica(ISR)は対象Partitionの最新状態と同期が取れているBrokerを指します。当然Leaderは常にISRとなり、Followerの場合はLeaderの更新に追い付き同期が取れた状態のもののみISRとなります。仮にFollowerがLeaderに追従できなくなった場合、そのFollowerはISRではなくなります。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="In-Sync Replicas" srcset="
+/community/media/blogs/kafka-acks-explained/in-sync-replicas_hu976122a385339436764fa5a7b293f0d1_30553_fce72e1100ff5fc9564552f1283799b8.webp 400w,
+/community/media/blogs/kafka-acks-explained/in-sync-replicas_hu976122a385339436764fa5a7b293f0d1_30553_53b76570ba3a381743ccf6f03feacf22.webp 760w,
+/community/media/blogs/kafka-acks-explained/in-sync-replicas_hu976122a385339436764fa5a7b293f0d1_30553_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-acks-explained/in-sync-replicas_hu976122a385339436764fa5a7b293f0d1_30553_fce72e1100ff5fc9564552f1283799b8.webp"
+width="760"
+height="247"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+上の図ではBroker 3は同期されていないのでISRではない、つまりout-of-syncとなります。&lt;/p>
+&lt;p>ちなみに、厳密にはISRか否かという判断はもう少し複雑で、ここで説明されているようにすんなり「このFollowerは最新の状態か」と判断出来る訳ではありません。ただ厳密な話をし始めるとこのエントリの主旨から外れるので、ここでは上の図にある赤いBrokerは同期が取れていないと、見たまま捉えてください。&lt;/p>
+&lt;h1 id="acks">Acks&lt;/h1>
+&lt;p>Acksはクライアント (Producer) 側の設定で、「どこまでFollowを含めて書き込みの確認が取れてからクライアントに返答するか」を指定するものです。有効な値は&lt;code>0&lt;/code>、&lt;code>1&lt;/code>、そして&lt;code>all&lt;/code>の3つです。&lt;/p>
+&lt;h2 id="acks0">acks=0&lt;/h2>
+&lt;p>&lt;code>0&lt;/code>が設定された場合、クライアントはBrokerまで到達したかの確認さえ行いません - メッセージがKafka Brokerに対して送られたタイミングでackを返します。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="acks=0" srcset="
+/community/media/blogs/kafka-acks-explained/ack-0_hu0550e2dc4172b509b74ba25178351429_24893_3c44fb1f740910333022481170b7baae.webp 400w,
+/community/media/blogs/kafka-acks-explained/ack-0_hu0550e2dc4172b509b74ba25178351429_24893_882b78cb72dd80307fdacbd72dcd1221.webp 760w,
+/community/media/blogs/kafka-acks-explained/ack-0_hu0550e2dc4172b509b74ba25178351429_24893_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-acks-explained/ack-0_hu0550e2dc4172b509b74ba25178351429_24893_3c44fb1f740910333022481170b7baae.webp"
+width="760"
+height="201"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+ackと呼びますがBrokerからの返答さえ待ちません。送れたらOKです。&lt;/p>
+&lt;h2 id="acks1">acks=1&lt;/h2>
+&lt;p>&lt;code>1&lt;/code>が設定された場合、クライアント (Producer) はLeaderにまでメッセージが到達した時点で書き込みの完了と判断します。Leader Brokerはメッセージを受け取った時点でレスポンスを返します。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="acks=0" srcset="
+/community/media/blogs/kafka-acks-explained/ack-1_hufbb81d13ec3e2d13fe50ef9ee9b16565_25528_3111a28552f0a098342a58fa79fec9da.webp 400w,
+/community/media/blogs/kafka-acks-explained/ack-1_hufbb81d13ec3e2d13fe50ef9ee9b16565_25528_e9144a72afa66fafd760c8736f931a9e.webp 760w,
+/community/media/blogs/kafka-acks-explained/ack-1_hufbb81d13ec3e2d13fe50ef9ee9b16565_25528_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-acks-explained/ack-1_hufbb81d13ec3e2d13fe50ef9ee9b16565_25528_3111a28552f0a098342a58fa79fec9da.webp"
+width="760"
+height="201"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+クライアントはレスポンスが返ってくるのを待ちます。Leaderからの返答が到着した時点で完了と判断しackとします。Leaderは受け取り次第レスポンスを返すので、Followerへのレプリケーションはレスポンスとは非同期に処理されます。&lt;/p>
+&lt;h2 id="acksall">acks=all&lt;/h2>
+&lt;p>&lt;code>all&lt;/code>と設定された場合、クライアントは全てのISRにメッセージが到達した時点で書き込みの完了と判断します。この際Leader BrokerがKafka側の書き込み判定を行なっており、全てのISRへのメッセージ到達の上クライアントにレスポンスを返します。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="acks=all incomplete" srcset="
+/community/media/blogs/kafka-acks-explained/ack-all_hubb3072fc779981dffa72d32676766abf_24119_c0ae40d167ec22fd1a697d124a14ea8d.webp 400w,
+/community/media/blogs/kafka-acks-explained/ack-all_hubb3072fc779981dffa72d32676766abf_24119_d7dcaf69c8cd6d40de1b4c5fa07bce88.webp 760w,
+/community/media/blogs/kafka-acks-explained/ack-all_hubb3072fc779981dffa72d32676766abf_24119_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-acks-explained/ack-all_hubb3072fc779981dffa72d32676766abf_24119_c0ae40d167ec22fd1a697d124a14ea8d.webp"
+width="760"
+height="201"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+上の図の状態ではBroker 3はまだメッセージを受け取っていません。この為Leaderはレスポンスを返しません。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="acks=all completed" srcset="
+/community/media/blogs/kafka-acks-explained/acs-all-completed_hu40e2b48bcec98f93fca3863ace2b1192_26398_516f5fcece0585c45a349a2c530fc785.webp 400w,
+/community/media/blogs/kafka-acks-explained/acs-all-completed_hu40e2b48bcec98f93fca3863ace2b1192_26398_95c6e832fba07495adfbb75a5b8d0104.webp 760w,
+/community/media/blogs/kafka-acks-explained/acs-all-completed_hu40e2b48bcec98f93fca3863ace2b1192_26398_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-acks-explained/acs-all-completed_hu40e2b48bcec98f93fca3863ace2b1192_26398_516f5fcece0585c45a349a2c530fc785.webp"
+width="760"
+height="201"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+全てのISRに渡って初めてレスポンスが返されます。&lt;/p>
+&lt;h2 id="acksの機能性">acksの機能性&lt;/h2>
+&lt;p>この通りacksはパフォーマンスとデータ欠損耐性のバランスを決める非常に有益な設定です。データ保全を優先するのであれば&lt;code>acks=all&lt;/code>の設定が適切です。&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup> 一方レイテンシやスループットに関する要件が極めて高い場合には&lt;code>0&lt;/code>に設定すれば最も効率が良くなりますが、同時にメッセージロスの可能性は高まります。&lt;/p>
+&lt;h1 id="minimum-in-sync-replicas">Minimum In-Sync Replicas&lt;/h1>
+&lt;p>&lt;code>acks=all&lt;/code>の設定に関して、もう一つ重要な要素があります。&lt;/p>
+&lt;p>例えばLeaderが全てのISRへの書き込み完了した上でレスポンスを返すとして、LeaderのみがISRだった場合、結果として&lt;code>acks=1&lt;/code>と振る舞いは同じとなるのでしょうか？&lt;/p>
+&lt;p>ここで&lt;code>min.insync.replicas&lt;/code>の設定が重要になります。&lt;/p>
+&lt;p>&lt;code>min.insync.replicas&lt;/code>というBroker側の設定は、&lt;code>acks=all&lt;/code>の際に「最低いくつのISRとなっているか (Leaderを含めて幾つのレプリカが最新状態か) を指定するものです。つまりLeaderは、&lt;code>acks=all&lt;/code>のリクエストに対して指定されたISRに満たないまでは返答せず、またそれが何かしらの理由で達成できない場合にはエラーを返します。データ保全観点でのゲートキーバーの様な役割を果たします。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="acks=all and ISR=2" srcset="
+/community/media/blogs/kafka-acks-explained/acks-all-isr-2_hub8eff15aeeef74355ae44643b51e51f5_28460_c68b5a3947a2b0f20bf8ea75ce7a2101.webp 400w,
+/community/media/blogs/kafka-acks-explained/acks-all-isr-2_hub8eff15aeeef74355ae44643b51e51f5_28460_249c85c3d6a5b99c5af7bf892f6e56ab.webp 760w,
+/community/media/blogs/kafka-acks-explained/acks-all-isr-2_hub8eff15aeeef74355ae44643b51e51f5_28460_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-acks-explained/acks-all-isr-2_hub8eff15aeeef74355ae44643b51e51f5_28460_c68b5a3947a2b0f20bf8ea75ce7a2101.webp"
+width="760"
+height="201"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+上記の状態だとBroker 3は同期されていない状態です。しかしながら&lt;code>min.insync.replicas=2&lt;/code>となっている場合には条件を満たす為この時点でレスポンスが返されます。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="acks=all and ISR below min.insync.replicas" srcset="
+/community/media/blogs/kafka-acks-explained/ack-all-error_hu2fd9c2a4aa3141a871510012387c44d9_34884_49566929a4d489d75f27fe22a6bcec7c.webp 400w,
+/community/media/blogs/kafka-acks-explained/ack-all-error_hu2fd9c2a4aa3141a871510012387c44d9_34884_924c01716b6e3c2021b34f2f98f42045.webp 760w,
+/community/media/blogs/kafka-acks-explained/ack-all-error_hu2fd9c2a4aa3141a871510012387c44d9_34884_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-acks-explained/ack-all-error_hu2fd9c2a4aa3141a871510012387c44d9_34884_49566929a4d489d75f27fe22a6bcec7c.webp"
+width="760"
+height="192"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+Broker 2と3が同期されていない状態です。この場合指定された&lt;code>min.insync.replicas&lt;/code>を下回るためLeaderからはエラーレスポンスが返る、つまり書き込みは失敗します。一方同じ状況であっても&lt;code>acks&lt;/code>の設定が&lt;code>0&lt;/code>もしくは&lt;code>1&lt;/code>の場合には正常なレスポンスが返されます。&lt;/p>
+&lt;h2 id="注意点">注意点&lt;/h2>
+&lt;p>一般的に&lt;code>min.insync.replicas&lt;/code>は「Leaderがクライアントに返答する際に、どれだけレプリケーションが完了しているかを指定する」と解釈されていますが、これは誤りです。正確には「リクエストを処理する為に最低いくつのレプリカが存在するか」を指定する設定です。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="acks=all incomplete" srcset="
+/community/media/blogs/kafka-acks-explained/ack-all_hubb3072fc779981dffa72d32676766abf_24119_c0ae40d167ec22fd1a697d124a14ea8d.webp 400w,
+/community/media/blogs/kafka-acks-explained/ack-all_hubb3072fc779981dffa72d32676766abf_24119_d7dcaf69c8cd6d40de1b4c5fa07bce88.webp 760w,
+/community/media/blogs/kafka-acks-explained/ack-all_hubb3072fc779981dffa72d32676766abf_24119_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-acks-explained/ack-all_hubb3072fc779981dffa72d32676766abf_24119_c0ae40d167ec22fd1a697d124a14ea8d.webp"
+width="760"
+height="201"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+上記の場合、Broker 1から3までが全て同期状態です。この時に新たなリクエスト (ここではメッセージ&lt;code>6&lt;/code>) を受け取った場合、Broker 2への同期が完了してもレスポンスは返しません。この場合、処理時にISRとなっているBroker 3への同期が完了して初めてレスポンスが返されます。&lt;/p>
+&lt;h1 id="まとめ">まとめ&lt;/h1>
+&lt;p>図で説明したことによって理解が深まったのではないかと思います。&lt;/p>
+&lt;p>おさらいすると、&lt;code>acks&lt;/code>と&lt;code>min.insync.replicas&lt;/code>はKafkaへの書き込みにおける欠損体制を指定する事ができます。&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>acks=0&lt;/code> - 書き込みはクライアントがLeaderにメッセージを送った時点で成功とみなします。Leaderからのレスポンスを待つことはしません。&lt;/li>
+&lt;li>&lt;code>acks=1&lt;/code> - 書き込みはLeaderへの書き込みが完了した時点で成功とみなします。&lt;/li>
+&lt;li>&lt;code>acks=all&lt;/code> - 書き込みはISR全てへの書き込みが完了した時点で成功とみなします。ISRが&lt;code>min.insync.replicas&lt;/code>を下回る場合には処理されません。&lt;/li>
+&lt;/ul>
+&lt;h2 id="その他情報">その他情報&lt;/h2>
+&lt;p>Kafkaは複雑な分散システムであり、学ばなければいけない事が多いのも事実です。Kafkaの他の重要な要素については以下も参考にしてください。&lt;/p>
+&lt;ul>
+&lt;li>&lt;a href="https://www.confluent.io/blog/apache-kafka-data-access-semantics-consumers-and-membership/" target="_blank" rel="noopener">Kafka consumer data-access semantics&lt;/a> - クライアント (Consumer) における欠損耐性、可用性、データ整合性の確保に関わる詳細。&lt;/li>
+&lt;li>&lt;a href="https://medium.com/@stanislavkozlovski/apache-kafkas-distributed-system-firefighter-the-controller-broker-1afca1eae302" target="_blank" rel="noopener">Kafka controller&lt;/a> - Broker間の連携がどの様になされるのかの詳細。特にレプリカが非同期 (Out-of-Sync) となるのはどういう条件下かについて説明しています。&lt;/li>
+&lt;li>&lt;a href="https://www.confluent.io/blog/configure-kafka-to-minimize-latency/" target="_blank" rel="noopener">“99th Percentile Latency at Scale with Apache Kafka&lt;/a> - Kafkaのパフォーマンスに関するConfluent Blogエントリ。&lt;/li>
+&lt;li>&lt;a href="https://www.confluent.io/resources/kafka-summit-san-francisco-2019/" target="_blank" rel="noopener">Kafka Summit SF 2019 videos&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://www.confluent.io/blog/" target="_blank" rel="noopener">Confluent blog&lt;/a> - Kafkaに関する様々なトピックを網羅。&lt;/li>
+&lt;li>&lt;a href="https://kafka.apache.org/documentation/" target="_blank" rel="noopener">Kafka documentation&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;p>Kafkaは継続的かつアクティブに開発されていますが、機能追加や改善は活発なコミュニティにより支えられています。開発の最前線で何が起こっているか興味がある場合はぜひ&lt;a href="https://kafka.apache.org/contact" target="_blank" rel="noopener">メーリングリスト&lt;/a> に参加してください。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="2 Minutes Streaming" srcset="
+/community/media/blogs/kafka-acks-explained/two-minites-streaming_hue3ec6dcfa348a79b62ae3c8b92373579_136684_69bf0270813a154536ca6866d0eebe28.webp 400w,
+/community/media/blogs/kafka-acks-explained/two-minites-streaming_hue3ec6dcfa348a79b62ae3c8b92373579_136684_9b81ef5fad55639d712bb44153e40131.webp 760w,
+/community/media/blogs/kafka-acks-explained/two-minites-streaming_hue3ec6dcfa348a79b62ae3c8b92373579_136684_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-acks-explained/two-minites-streaming_hue3ec6dcfa348a79b62ae3c8b92373579_136684_69bf0270813a154536ca6866d0eebe28.webp"
+width="760"
+height="399"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+このエントリの著者である&lt;a href="../../authors/stanislav/">Stanislav Kozlovski&lt;/a> は&lt;a href="https://2minutestreaming.com/" target="_blank" rel="noopener">2 Minute Streaming&lt;/a>というKafkaに関する隔週ニュースレターを発行しています。是非購読してみてください。&lt;/p>
+&lt;div class="footnotes" role="doc-endnotes">
+&lt;hr>
+&lt;ol>
+&lt;li id="fn:1">
+&lt;p>(訳者注)ほとんどのユースケースでは&lt;code>acks=all&lt;/code>が適切であり、Kafkaのデフォルトでもあります。&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;/div></description></item></channel></rss>
