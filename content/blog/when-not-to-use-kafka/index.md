@@ -1,6 +1,6 @@
 ---
-title: When NOT to use Apache Kafka?
-summary: Kafkaの利用が適さないユースケースとは？
+title: Kafkaの利用が適さないユースケースとは？
+summary: 具体的なユースケースから紐解く、Kafkaが向くとき、向かないとき。
 authors:
   - kai
   - hashi
