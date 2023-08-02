@@ -176,7 +176,7 @@ loading="lazy" data-zoomable />&lt;/div>
 &lt;p>(訳者注)ほとんどのユースケースでは&lt;code>acks=all&lt;/code>が適切であり、Kafkaのデフォルトでもあります。&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
 &lt;/li>
 &lt;/ol>
-&lt;/div></description></item><item><title>When NOT to use Apache Kafka?</title><link>https://confluent-jp.github.io/community/blog/when-not-to-use-kafka/</link><pubDate>Mon, 17 Jul 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/when-not-to-use-kafka/</guid><description>&lt;blockquote>
+&lt;/div></description></item><item><title>Kafkaの利用が適さないユースケースとは？</title><link>https://confluent-jp.github.io/community/blog/when-not-to-use-kafka/</link><pubDate>Mon, 17 Jul 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/when-not-to-use-kafka/</guid><description>&lt;blockquote>
 &lt;p>このブログエントリはConfluent Field CTOである&lt;a href="https://www.kai-waehner.de/" target="_blank" rel="noopener">Kai Waeehner&lt;/a>のサイトで2022/1/4に公開された &lt;a href="https://www.kai-waehner.de/blog/2022/01/04/when-not-to-use-apache-kafka/" target="_blank" rel="noopener">When NOT to use Apache Kafka?&lt;/a>の日本語訳です。Kai本人の了承を得て翻訳/公開しています。&lt;/p>
 &lt;/blockquote>
 &lt;p>Apache Kafkaは、Data in Motionにおけるイベントストリーミングのデファクトスタンダードです。あらゆる業界でその採用が大きく伸びているため、私は毎週のように『ではApache Kafkaを使うべきでは無いのはどんな場合？』『ストリーム処理の基盤に重要な要素は？』『kafkaにこの機能性が無いのはなぜ？』『Kafkaを採用しないと判断する為の条件とは？』という質問を受けます。このブログ記事では、Kafkaを使うべき時、Kafkaを使うべきでない時、そしてKafkaを使うべきかもしれない時について順番に説明します。&lt;/p>
