@@ -1,4 +1,65 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Blogs and Announcements | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/blog/</link><atom:link href="https://confluent-jp.github.io/community/blog/index.xml" rel="self" type="application/rss+xml"/><description>Blogs and Announcements</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Sun, 06 Aug 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/media/icon_hubade5daff97c80353b10ab16b141ee15_5385_512x512_fill_lanczos_center_3.png</url><title>Blogs and Announcements</title><link>https://confluent-jp.github.io/community/blog/</link></image><item><title>Tiered Storageは何故そんなに重要なのか？</title><link>https://confluent-jp.github.io/community/blog/kip405-why-tiered-storage-important/</link><pubDate>Sun, 06 Aug 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/kip405-why-tiered-storage-important/</guid><description>&lt;h2 id="tiered-storageとは">Tiered Storageとは&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Blogs and Announcements | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/blog/</link><atom:link href="https://confluent-jp.github.io/community/blog/index.xml" rel="self" type="application/rss+xml"/><description>Blogs and Announcements</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Tue, 15 Aug 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/media/icon_hubade5daff97c80353b10ab16b141ee15_5385_512x512_fill_lanczos_center_3.png</url><title>Blogs and Announcements</title><link>https://confluent-jp.github.io/community/blog/</link></image><item><title>Confluent Cluster Linkingの仕組みについて</title><link>https://confluent-jp.github.io/community/blog/cluster-linking-demystified/</link><pubDate>Tue, 15 Aug 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/cluster-linking-demystified/</guid><description>&lt;h2 id="クラスタ間のレプリケーション---一般的なアプローチ">クラスタ間のレプリケーション - 一般的なアプローチ&lt;/h2>
+&lt;p>クラスタ間でデータのレプリケーションのニーズは古くからあり、DRや組織内のグループ会社間/事業部間の部分的なデータ共有、または&lt;a href="https://www.uber.com/en-JP/blog/kafka/" target="_blank" rel="noopener">UberさんのActive-Active双方向レプリケーション&lt;/a>の様な使い方もあります。いずれにせよ、何かしらの形でKafkaクラスタから他のクラスタにデータをレプリケートするという手法は変わらず、また利用できるツールも (多少の機能差異はありながらも) 基本的に同じアプローチを取っています。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="Replicator Mechanism" srcset="
+/community/media/blogs/cluster-linking-demystified/replicator-mechanism_hua771e280c70cf025bf445644156bacea_137607_6a7dc20682ffb664106b15d8d7a60f6e.webp 400w,
+/community/media/blogs/cluster-linking-demystified/replicator-mechanism_hua771e280c70cf025bf445644156bacea_137607_68b65292a9a164eca0756f26b403592e.webp 760w,
+/community/media/blogs/cluster-linking-demystified/replicator-mechanism_hua771e280c70cf025bf445644156bacea_137607_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/cluster-linking-demystified/replicator-mechanism_hua771e280c70cf025bf445644156bacea_137607_6a7dc20682ffb664106b15d8d7a60f6e.webp"
+width="760"
+height="395"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;p>基本的なアプローチはどのレプリケーションツールでも同じで、Producer/Consumerの両方を司るKafka Connectコネクタとして稼働します。SourceクラスタのTopicからConsumeし、DestinationクラスタのTopicにProduceする、理解し易いアプローチだと思います。当然SourceとDestinationのTopicは別々のものなのでPartition数を変える事も出来ますし、一般的なコネクタ同様&lt;a href="https://docs.confluent.io/platform/7.4/connect/transforms/overview.html" target="_blank" rel="noopener">SMT&lt;/a>を利用する事も出来ます。&lt;/p>
+&lt;p>同時に、Kafkaクラスタの外で双方にアクセス出来るコンポーネントを別途運用する必要性もあります。レプリケーションツールとKafkaブローカー間にはペイロードの圧縮/解凍処理を挟み、独立したConsume/Produce処理となる為レイテンシも比較的高くなります。またKafkaクラスタ同士がお互いを認識している訳ではなく、それぞれのクラスタに存在するTopic同士も機械的な関連性はありません。当然双方のTopicのConsumer Offsetは全く独立して管理されている為、TopicにアクセスするConsumerをクラスタを跨いで移動させる場合には、何かしらの方法でConsumer Offsetを変換する必要性も発生します。&lt;/p>
+&lt;h2 id="cluser-linking---クラスタを跨いだreplica-fetching">Cluser Linking - クラスタを跨いだReplica Fetching&lt;/h2>
+&lt;p>Confluent Cluster Linkingのアプローチは大きく異なります。結果としてConsumer Offsetを含め全てのTopicに関するメタデータを完全に同期した状態でデータのレプリケーションが可能です。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="Cluster Linking Mechanism" srcset="
+/community/media/blogs/cluster-linking-demystified/cluster-linking-mechanism_hu230bfaae51528d07c36b594b0b4778bf_129114_43868967e287aedf92cc92b6a4d38ff2.webp 400w,
+/community/media/blogs/cluster-linking-demystified/cluster-linking-mechanism_hu230bfaae51528d07c36b594b0b4778bf_129114_d74af5d4933c58bf63cfd98a36755bff.webp 760w,
+/community/media/blogs/cluster-linking-demystified/cluster-linking-mechanism_hu230bfaae51528d07c36b594b0b4778bf_129114_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/cluster-linking-demystified/cluster-linking-mechanism_hu230bfaae51528d07c36b594b0b4778bf_129114_43868967e287aedf92cc92b6a4d38ff2.webp"
+width="760"
+height="404"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;p>仕組みとしては、同一クラスタ内におけるKafkaのレプリケーションの仕組みに近く、&lt;a href="https://www.confluent.io/ja-jp/blog/multi-geo-replication-in-apache-kafka/" target="_blank" rel="noopener">Replica Fetcherと近い形でDestinationクラスタにあるBrokerがクラスタ境界を跨いでフェッチする&lt;/a>形でレプリケーションを行います。処理を仲介するものも、ワークロードの何かしらの受け渡しの様な処理も無いため、スループットも高く、また低レイテンシなレプリケーションが可能です。&lt;/p>
+&lt;p>当然仲介用のConnectクラスタ等別途立ち上げる必要はありません。リンクの設置も、SourceもしくはDestinationクラスタであるConfluent CloudもしくはPlatformに対してリンク作成コマンドを実行すれば完了します。&lt;/p>
+&lt;h2 id="特徴と注意点">特徴と注意点&lt;/h2>
+&lt;p>先にメリットについては記載しましたが、非同期レプリケーションではありながらSourceとDestinationのデータ差 (オフセット) がこれまでのアプローチよりかなり小さく、また安定的に同期出来るので、DR等の適用時において復旧/欠損対象となるデータ量を限定する事が出来ます。メタデータごと完全に同期しているのでクラスタ間のデータギャップやその復旧時の運用負荷も下がります。フェイルオーバーを考えると、Cluster Linkingを利用した場合にはオペレーションをかなり簡素化出来るのが特徴です。&lt;/p>
+&lt;h3 id="注意点-1---障害時にデータの欠損は起こり得る">注意点 1 - 障害時にデータの欠損は起こり得る&lt;/h3>
+&lt;p>Cluster LinkingはMirrorMaker2等と比べると、確かに低レイテンシでデータの同期が可能です。しかしながらあくまで同期ではなく非同期のレプリケーションである為、RPO (Recovery Point Objective: 目標復旧地点) は0ではありません。Sourceクラスタにおいて、「書き込み完了と判断された後」かつ「その変更がDestinationクラスタ側からフェッチされるまで」にSourceクラスタがダウンしてしまう可能性はあり、この条件に合致する差分はSourceが再度復旧出来るまでアクセス出来ません。&lt;/p>
+&lt;h3 id="注意点-2---topicはpartition数を含め完全一致">注意点 2 - TopicはPartition数を含め完全一致&lt;/h3>
+&lt;p>DestinationクラスタにレプリケートされたTopicは&lt;code>Mirror Topic&lt;/code>と呼ばれる少し特殊なTopicです。具体的には：&lt;/p>
+&lt;ul>
+&lt;li>全Partitionのイベント数、イベント順序、各イベントのデータが全てSource Topicと全く同じとなる。&lt;/li>
+&lt;li>Read OnlyでありDestinationクラスタ内から書き込み不可。&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>
+となります。&lt;/li>
+&lt;/ul>
+&lt;p>この為、例えばSourceクラスタのTopicからSMTを使って特定フィールドをマスキングしたり、Sourceと異なるPartition数をDestinationで指定する事は出来ません。&lt;/p>
+&lt;h3 id="注意点-3---フェイルオーバー後の復旧はフェイルフォワードを推奨">注意点 3 - フェイルオーバー後の復旧はフェイルフォワードを推奨&lt;/h3>
+&lt;p>Cluster LinkingではDR時にフェイルオーバーした際、基本的にDRであったクラスタを今度は本番と位置付けるようコマンドが整備されています。例えば東京リージョン (Prod) から大阪リージョン (DR) へのフェイルオーバー時に、大阪が本番リージョンとして機能します。その後東京リージョンが復旧した場合、フェイルバックするのではなく今度は東京をDRとして継続オペレーションを実施することを推奨しています。&lt;/p>
+&lt;h2 id="おわりに">おわりに&lt;/h2>
+&lt;p>上記に注意点を幾つか並べましたが、どれもCluster Linkingの欠点と言うよりは特性であり、つまりこの特性を充分理解した上でレプリケーション戦略を立てる事が大事です。&lt;/p>
+&lt;ul>
+&lt;li>注意点 1 - これは非同期レプリケーションである限り避けようがありません。逆に、非同期なのでSourceクラスタに対する書き込みレイテンシには影響を与えないメリットもあります。&lt;/li>
+&lt;li>注意点 2 - 通常のReplica Fetcherの仕組みと近いと考えると当然で、バイトレベルで同一のデータをDestinationクラスタ上に持てるというメリットを考えると納得出来る制約だと思います。&lt;/li>
+&lt;li>注意点 3 - これは意見が分かれるところかも知れません。データ基盤全体におけるBC戦略はKafkaのみのルールで決めれるものでは無いので、許容出来ないユースケースは多いと思います。ただ作業の手間が増えるだけで、フェイルバックする事は不可能ではありません。&lt;/li>
+&lt;/ul>
+&lt;p>他にも場合によってはMirrorMaker2やConfluent Replicatorの方が理に適った選択肢であるケースはあり、実際にもCluster LinkingではなくConfluent Replicatorを採用されるユーザーもいます。確かにCluster Linkingは画期的なレプリケーション機能ではありますが、その特性を理解した上で採用を判断する事が (何事に言える事ですが) 重要です。&lt;/p>
+&lt;div class="footnotes" role="doc-endnotes">
+&lt;hr>
+&lt;ol>
+&lt;li id="fn:1">
+&lt;p>当然DR時にはMirror Topicを元にオペレーションを再開するので、その際は&lt;code>kafka-mirrors --failover&lt;/code>コマンドで書き込み出来るよう切り替えます。&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;/div></description></item><item><title>Tiered Storageは何故そんなに重要なのか？</title><link>https://confluent-jp.github.io/community/blog/kip405-why-tiered-storage-important/</link><pubDate>Sun, 06 Aug 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/kip405-why-tiered-storage-important/</guid><description>&lt;h2 id="tiered-storageとは">Tiered Storageとは&lt;/h2>
 &lt;p>今年の後半にリリースが予定されている&lt;a href="https://cwiki.apache.org/confluence/display/KAFKA/Release&amp;#43;Plan&amp;#43;3.6.0" target="_blank" rel="noopener">Apache Kafka 3.6&lt;/a>には、Tiered Storageと呼ばれるKafkaコミュニティが待ち望んだ新機能が含まれる予定です。この機能は&lt;a href="https://cwiki.apache.org/confluence/display/KAFKA/KIP-405%3A&amp;#43;Kafka&amp;#43;Tiered&amp;#43;Storage" target="_blank" rel="noopener">KIP-405&lt;/a>として何年も前に登録されたKIPであり、長い期間をかけてようやくリリース目処が経ちました。&lt;/p>
 &lt;p>これまでKafkaのデータは常にBrokerのストレージに格納されていましたが、これを二層化して古いセグメントを自動的に退避するという機能です。Kafkaに格納されたイベントをオブジェクトストレージに退避するというプラクティスは一般的であり、これまではKafka Connectコネクタを使って自分で退避させるアプローチを取っていました。これをKafkaネイティブな機能として提供する、その役割をKafka Brokerが行うというものです。クライアントからはこのオペレーションは隠蔽化されており、新しいイベントも古いイベントも同じアプローチでアクセスする事が出来ます。&lt;/p>
 &lt;h2 id="tiered-storageの動き---図解">Tiered Storageの動き - 図解&lt;/h2>
