@@ -1,4 +1,192 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Kafka Core | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/category/kafka-core/</link><atom:link href="https://confluent-jp.github.io/community/category/kafka-core/index.xml" rel="self" type="application/rss+xml"/><description>Kafka Core</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Sun, 06 Aug 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/media/icon_hubade5daff97c80353b10ab16b141ee15_5385_512x512_fill_lanczos_center_3.png</url><title>Kafka Core</title><link>https://confluent-jp.github.io/community/category/kafka-core/</link></image><item><title>Tiered Storageは何故そんなに重要なのか？</title><link>https://confluent-jp.github.io/community/blog/kip405-why-tiered-storage-important/</link><pubDate>Sun, 06 Aug 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/kip405-why-tiered-storage-important/</guid><description>&lt;h2 id="tiered-storageとは">Tiered Storageとは&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Kafka Core | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/category/kafka-core/</link><atom:link href="https://confluent-jp.github.io/community/category/kafka-core/index.xml" rel="self" type="application/rss+xml"/><description>Kafka Core</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Mon, 21 Aug 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/media/icon_hubade5daff97c80353b10ab16b141ee15_5385_512x512_fill_lanczos_center_3.png</url><title>Kafka Core</title><link>https://confluent-jp.github.io/community/category/kafka-core/</link></image><item><title>解剖 Kafka Controller Broker</title><link>https://confluent-jp.github.io/community/blog/kafka-controller-broker-explained/</link><pubDate>Mon, 21 Aug 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/kafka-controller-broker-explained/</guid><description>&lt;blockquote>
+&lt;p>このブログエントリはKafkaコミッタである Stanislav Kozlovski(&lt;a href="https://https://twitter.com/BdKozlovski" target="_blank" rel="noopener">𝕏&lt;/a>|&lt;a href="https://www.linkedin.com/in/stanislavkozlovski/" target="_blank" rel="noopener">Ln&lt;/a>) のサイトで2018/10/31に公開された&lt;a href="https://stanislavkozlovski.medium.com/apache-kafkas-distributed-system-firefighter-the-controller-broker-1afca1eae302" target="_blank" rel="noopener">Apache Kafka’s Distributed System Firefighter — The Controller Broker&lt;/a>の日本語訳です。Stanislav本人の了承を得て翻訳/公開しています。&lt;/p>
+&lt;/blockquote>
+&lt;h2 id="はじめに">はじめに&lt;/h2>
+&lt;p>Kafkaは成長を続ける分散ストリーミング基盤です。現時点での業界デファクト技術であり、広がるデータパイプラインの利用に対しても拡張しつつ安定的に稼働することが出来ます。もしKafkaの概要についてもう少し知りたい方は&lt;a href="https://hackernoon.com/thorough-introduction-to-apache-kafka-6fbf2989bbc1" target="_blank" rel="noopener">A Thorough Introduction To Apache Kafka&lt;/a>をご覧ください。&lt;/p>
+&lt;p>この記事を書く中で、このKafkaの安定稼働を支える中の仕組みについて書きたいと思うようになりました。&lt;/p>
+&lt;p>このエントリではKafkaにおけるControllerの概念 - Kafkaという分散基盤を健康的に稼働し続ける使命を支える機能についてご紹介します。&lt;/p>
+&lt;h2 id="controller-broker">Controller Broker&lt;/h2>
+&lt;p>分散システムは常に協調の中で稼働し続ける必要があります。何かしらのイベントがクラスタで発生した場合、クラスタ内のコンポーネントは同調してそれに反応しなければいけません。その中で、クラスタとしてどう反応するべきなのか、Brokerは何をすべきなのかを指示する存在が必要です。&lt;/p>
+&lt;p>その役割を担うのがControllerです。
+Controller自身は複雑な仕組みではありません - ControllerもBrokerであり、通常のBrokerとしての役割と合わせて追加の役割も持つBrokerです。つまりController BrokerもPartitionを制御し、ReadとWriteのリクエストに対応し、裏ではレプリケーションに参加します。&lt;/p>
+&lt;p>今追加の役割の中で最も重要なのは、クラスタ内のBrokerノードの管理であり、Brokerが追加、クラスタから離脱、もしくは障害が発生した際に適切にそのメンバーシップを管理することです。これにはPartitionのリバランスや新たなPartion Leaderの特定も含まれます。&lt;/p>
+&lt;p>KafkaクラスタにはControllerが常に稼働し、唯一1つのControllerのみ稼働します。&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>&lt;/p>
+&lt;h2 id="controllerの役割">Controllerの役割&lt;/h2>
+&lt;p>Controller Brokerは複数の複数を担います。Topicの作成/削除、Partitionの追加 (とLeaderの特定)、BrokerがClusterを離脱した際の諸々の制御等様々ありますが、基本的にはクラスタにおける管理者として振る舞います。&lt;/p>
+&lt;h3 id="brokerノードの離脱">Brokerノードの離脱&lt;/h3>
+&lt;p>エラーや計画的な停止によってBrokerノードがクラスタから離脱した際、そのBrokerノードにLeaderのあったPartitionにはアクセス出来なくなります。 (クライアントはWrite/Readのいずれであっても常にPartition Leaderにのみアクセスします。&lt;sup id="fnref:2">&lt;a href="#fn:2" class="footnote-ref" role="doc-noteref">2&lt;/a>&lt;/sup>) この為Broker離脱時のダウンタイムを短縮するには、いかに迅速に新たなLeaderを選出するかが重要になります。&lt;/p>
+&lt;p>Controller Brokerは他のBrokerノードが離脱した際に対処します。Zookeeperには&lt;a href="https://zookeeper.apache.org/doc/r3.4.8/zookeeperProgrammers.html#ch_zkWatches" target="_blank" rel="noopener">Zookeeper Watch&lt;/a>と呼ばれる特定データの変更時に登録者に対して通知をする機能で、ControllerはこのZookeeper Watchを利用してBrokerの離脱を検知します。Zookeeper WatchはBroker離脱時のトリガーとして働くKafkaにとって非常に重要な機能です。&lt;/p>
+&lt;p>ここにおける「特定データ」とはBrokerデータの集合です。&lt;/p>
+&lt;p>下にあるのはBroker 2の&lt;a href="https://zookeeper.apache.org/doc/r3.4.8/zookeeperProgrammers.html#ch_zkSessions" target="_blank" rel="noopener">Zookeeper Session&lt;/a>が無効化される事によりBroker 2のIDがリストから削除された場合の図解です。(Kafka BrokerはZookeeperへのハートビートを送り続けるが、遅れなくなるとセッションが無効化する)&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="Zookeeper Watch and Controller" srcset="
+/community/media/blogs/kafka-controller-broker-explained/zookeeper-watch_hu999b6f38219025080af213f7c0820560_78754_933d8c0d0ca12b3944bf46cc705eee83.webp 400w,
+/community/media/blogs/kafka-controller-broker-explained/zookeeper-watch_hu999b6f38219025080af213f7c0820560_78754_55f25aaf2122bf1cb5ca633f5a0880a6.webp 760w,
+/community/media/blogs/kafka-controller-broker-explained/zookeeper-watch_hu999b6f38219025080af213f7c0820560_78754_1200x1200_fit_q75_h2_lanczos_2.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-controller-broker-explained/zookeeper-watch_hu999b6f38219025080af213f7c0820560_78754_933d8c0d0ca12b3944bf46cc705eee83.webp"
+width="760"
+height="637"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;p>ControllerはこのBroker離脱の通知を受け取り作業に取り掛かりますが、まずはBrokerの離脱によって影響を受けたPartitionの新たなLeaderを決定します。この後、クラスタ内の全てのBrokerに対して通知し、このリクエストを受け取った各Partition毎にLeaderになったりFollowerとしてLeaderに&lt;a href="https://kafka.apache.org/protocol#The_Messages_LeaderAndIsr" target="_blank" rel="noopener">LeaderAndIsr&lt;/a>リクエストを送付します。&lt;/p>
+&lt;h3 id="brokerノードのクラスタ復帰">Brokerノードのクラスタ復帰&lt;/h3>
+&lt;p>適切なPartition Leaderの配置はKafkaクラスタの負荷分散の上で重要な要素です。上記で説明したとおり、Brokerノードがクラスタを離脱した際には他のBrokerが代わって対応する必要があります。この場合Brokerは当初の想定以上のPartitionを各々が担うことになり、クラスタ全体の健全性やパフォーマンスに少なからず影響を及ぼします。当然なるべく早くバランスを取り戻す必要があります。&lt;/p>
+&lt;p>Kafkaは元々のPartitionアサインメントが、ある程度「適切」であるという想定を持っています。このアサインメントにおけるPartition Leaderはいわゆる &lt;em>Preferreed Leader(優先リーダー)&lt;/em> として認識され、最初にそのPartitionが追加された時のPartition Leaderを指します。合わせてKafkaは&lt;a href="https://cwiki.apache.org/confluence/display/KAFKA/KIP-36&amp;#43;Rack&amp;#43;aware&amp;#43;replica&amp;#43;assignment" target="_blank" rel="noopener">インフラ構成としてのラックやAvailability Zoneを意識したPartition配置の機能&lt;/a> (ラック/AZ障害耐性を確保する為にLeaderとFollowerを別のラック/AZに配置する) もサポートしており、Partition Leaderの配置はクラスタの信頼性に大きく寄与しています。&lt;/p>
+&lt;p>デフォルトでは&lt;code>auto.leader.rebalance.enabled=true&lt;/code>となっており、KafkaはPreferred Leaderが存在し、かつ実際のPartition Leaderではない場合にはPreferred Leaderを再選出します。&lt;/p>
+&lt;p>Brokerノードのクラスタからの離脱も、多くの場合一時的であり、ある一定時間経過後に離脱したBrokerノードは再度クラスタメンバーとして復帰します。この為Brokerノードが離脱した際にも関連するメタデータは即座に削除されず、Follower Partitionも新たにアサインされません。&lt;/p>
+&lt;p>注意点として、再参加したBrokerノードも直ぐにPartition Leaderとして再選出される訳ではなく、その候補となる為には別の条件も必要となります。&lt;/p>
+&lt;h3 id="in-sync-replicas">In-Sync Replicas&lt;/h3>
+&lt;p>In-Sync Replica (ISR) は状態がPartition Leaderと同じ Followerを指します。言い方を変えると、ISRはそのLeaderのレプリケーションが追いついている状態にあります。Partion LeaderはどのFollowerがISRでどのFollowerがそうではないかをトラックする必要があり、その状態はZookeeperに永続化されます。&lt;/p>
+&lt;p>Kafkaの障害耐性と可用性の保証はデータのレプリケーションに基づいており、kafkaが機能するには常に十分なISRが確保されているかが極めて重要です。&lt;/p>
+&lt;p>FollowerがLeaderに昇格するにはまずISRである必要があります。全てのPartitionにはISRのリストがあり、Partition LeaderとControllerによって管理されています。ISRから新たなPartition Leaderを選出する処理は &lt;em>Clean Leader Election&lt;/em> と呼ばれています。一方ユーザーにはこれとは異なる方法でLeaderを昇格させる事も可能で、Partion Leaderがクラスタを離脱した際にはISRではないFollowerを昇格させる事も可能です。これはLeaderもISRも存在しないという状況において、データ整合性より可用性を優先させる必要がある稀なケースです。&lt;/p>
+&lt;p>ここで再度の確認になりますが、クライアントはPartition LeaderからしかConsumeできません。仮にISRではないFollowerをLeaderに昇格した場合には、当然まだLeaderから取得されていなかったメッセージは失うことになります。これはメッセージを失うだけでなく、Consumerから見たイベントのストリーム上の位置 (オフセット) も上書かれます。&lt;/p>
+&lt;p>残念ながらClearn Leader Electionの場合にも同様のデータ障害が発生する可能性はあります。ISRも様々な要因によってLeaderと完全に同期が取れていないケースです - 具体的には、Leaderのオフセットが100とした時に、Followerのオフセットが95、99、80となっているような状況です。レプリケーションは非同期に実施される為、最後のメッセージまで完全にFollower側に渡ったと保証する事は困難です。&lt;/p>
+&lt;p>FollowerがLeaderに対してin-syncであると判断する条件は以下です：&lt;/p>
+&lt;ul>
+&lt;li>Partition Leaderから最新のメッセージを &lt;em>X&lt;/em> ミリ秒前に取得している。 (Xは &lt;code>replica.lag.time.max.ms&lt;/code>にて設定可能)&lt;/li>
+&lt;li>Zookeeperに対して &lt;em>Y&lt;/em> ミリ秒前にハートビートを送っている。 (Yは&lt;code>zookeeper.session.timeout.ms&lt;/code>にて設定可能)&lt;/li>
+&lt;/ul>
+&lt;h3 id="データ整合性と耐久性">データ整合性と耐久性&lt;/h3>
+&lt;p>Leaderが機能不全に陥った場合、状況によってはISRが新しいLeaderに昇格した場合にも僅かにメッセージを失う可能性がある点について言及しました。具体的にはLeaderがFollowerからのフェッチリクエストを処理し終わった直後に新たにメッセージを受け取ったケースで、この場合新たなメッセージはまだFollowerがメッセージの到着を把握するまでの空白期間が存在し得ます。このタイミングでLeaderが機能不全に陥った場合、メッセージはLeaderにしか存在しないながらもFollowerの一部はISRとして成立します。そしてISRがそのままLeaderに昇格する可能性があります。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="ISR which is really not in-sync sequence" srcset="
+/community/media/blogs/kafka-controller-broker-explained/not-in-sync-isr_hu7f8f7a0d1dc18ad510097bfa7ae71f61_47308_adb7d173994b97446bf22bea411ccfcb.webp 400w,
+/community/media/blogs/kafka-controller-broker-explained/not-in-sync-isr_hu7f8f7a0d1dc18ad510097bfa7ae71f61_47308_df314272b8d2415dfd6f7a900a96e469.webp 760w,
+/community/media/blogs/kafka-controller-broker-explained/not-in-sync-isr_hu7f8f7a0d1dc18ad510097bfa7ae71f61_47308_1200x1200_fit_q75_h2_lanczos_2.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-controller-broker-explained/not-in-sync-isr_hu7f8f7a0d1dc18ad510097bfa7ae71f61_47308_adb7d173994b97446bf22bea411ccfcb.webp"
+width="760"
+height="617"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;h3 id="produer側のacksの設定">Produer側のAcksの設定&lt;/h3>
+&lt;p>上記の例ではLeaderは自身への書き込みが完了した時点でAcksを返す設定 (&lt;code>acks=1&lt;/code>) を想定しています。Broker 1が最後のAcksを返した直後に機能不全となった為、Broker 2はISRではあるものの&lt;code>offset:100&lt;/code>のメッセージは受け取っていない状態でLeaderに昇格しています。&lt;/p>
+&lt;p>この事象は&lt;code>acks=all&lt;/code>と設定することにより回避する事は可能で、つまりLeaderは全てのISRへの書き込みが正常終了した時点で初めてacksを返します。残念ながらこの設定の場合クラスタ全体のスループットには影響します。Kafkaのレプリケーションはpullモデルである為、Leaderは全てのISRのフェッチリクエストが届き、またそれが完了するまで待たなければいけません。&lt;/p>
+&lt;p>いくつかのユースケースでは、パフォーマンスを優先して&lt;code>acks=1&lt;/code>とする場合もあります。&lt;/p>
+&lt;p>&lt;code>acks=all&lt;/code>と設定した場合にメッセージの欠損は回避出来ます。新たにLeaderとなったISRには無いメッセージを既に取得したConsumerが出る可能性もありません。Producerからのacksを元にデータの整合性は保たれます。&lt;/p>
+&lt;h3 id="high-watermark-offset">High Watermark Offset&lt;/h3>
+&lt;p>Leaderは全てのISRへのレプリケーションが完了しない限りacksを返さないとします。この際Brokerは &lt;em>high watermark offset&lt;/em> と呼ばれる「全てのISRが取得済みの最大のオフセット」を管理しています。Leaderは合わせてConsumerからのリクエストに対してこのhigh watermark offsetを超えないメッセージのみ提供する事により、DBで言うところのNon-Repeatabl Readを回避しています。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="High Watermark Offset" srcset="
+/community/media/blogs/kafka-controller-broker-explained/high-watermark-offset_hu7ee940ddd7907971145f7d4d7b70115c_34334_7e9284c01e9197a8bb67bcfaa76768b5.webp 400w,
+/community/media/blogs/kafka-controller-broker-explained/high-watermark-offset_hu7ee940ddd7907971145f7d4d7b70115c_34334_b5767dba72b37534de661ef436cf0a84.webp 760w,
+/community/media/blogs/kafka-controller-broker-explained/high-watermark-offset_hu7ee940ddd7907971145f7d4d7b70115c_34334_1200x1200_fit_q75_h2_lanczos_2.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-controller-broker-explained/high-watermark-offset_hu7ee940ddd7907971145f7d4d7b70115c_34334_7e9284c01e9197a8bb67bcfaa76768b5.webp"
+width="760"
+height="204"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;h3 id="split-brain">Split Brain&lt;/h3>
+&lt;p>Controller Brokerがダウンした場合、メタデータの欠損を回避する為にKafkaは急遽代理のControllerを立てる必要があります。&lt;/p>
+&lt;p>ここでの問題は、我々にはController Brokerの応答不能が完全な機能不全によるものなのか、それとも一時的な障害 によるものかの判断が出来ない事です。それでも新たなControllerを選出する必要がありますが、場合によってはZombie Controllerを生み出す危険性もあります。つまり、クラスタからは既に稼働を停止しControllerではないと認識されているにも関わらず、再びアクティブとなりControllerとして振る舞うBrokerです。&lt;/p>
+&lt;p>この事象は容易に起こり得ます。例えば一時的な&lt;a href="https://aphyr.com/posts/288-the-network-is-reliable" target="_blank" rel="noopener">ネットワークの分断&lt;/a>が発生した場合や、非常に長いGC Pause(Stop-the-World - 全ての処理がGCの実行完了まで停止される事象)が発生した場合には、ClusterはそのController Brokerが既に停止したと判断し得ます。特にGC Pauseの場合、Controller Brokerの観点では何一つ変わっていないのに時間が経過している状況となります。この為、Controllerが既に選出された後に以前のControllerが復帰する、分散システムにおける&lt;a href="https://techthoughts.typepad.com/managing_computers/2007/10/split-brain-quo.html" target="_blank" rel="noopener">Split Brain&lt;/a>が発生します。&lt;/p>
+&lt;p>例に準えて解説します。稼働中のControllerが長いGC Pauseに陥ったとします。ControllerのZookeeper Sessionが無効化され、&lt;code>/controller&lt;/code>znodeは削除されます。クラスタ内の他のBrokerは通知を受けます。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="Zombie Controller 1" srcset="
+/community/media/blogs/kafka-controller-broker-explained/zombie-controller-1_hu23f36871d72aa03f5abf14da0a4f651a_28874_8234f76cd2ef1f4693fc46419d252975.webp 400w,
+/community/media/blogs/kafka-controller-broker-explained/zombie-controller-1_hu23f36871d72aa03f5abf14da0a4f651a_28874_ccb5a50a39671ca10d8ef574dba2e1de.webp 760w,
+/community/media/blogs/kafka-controller-broker-explained/zombie-controller-1_hu23f36871d72aa03f5abf14da0a4f651a_28874_1200x1200_fit_q75_h2_lanczos_2.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-controller-broker-explained/zombie-controller-1_hu23f36871d72aa03f5abf14da0a4f651a_28874_8234f76cd2ef1f4693fc46419d252975.webp"
+width="760"
+height="270"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;p>Controllerの不在状況を回避する為、全てのBrokerがControllerになろうとします。この場合Broker 2が選出され新たなControllerとして&lt;code>/controller&lt;/code>znodeに自身が追加されます。&lt;/p>
+&lt;p>全てのBrokerはこの新たなznodeが作成され、Broker 2がControllerである通知を受けます。この際にも唯一GC Pause中のBroker 3だけはこの通知を受けません。ちなみにこの通知がBrokerに到達しない可能性は他にもあります。いずれにせよ最終的にBroker 3には新たなController選出の通知が届きません。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="Zombie Controller 2" srcset="
+/community/media/blogs/kafka-controller-broker-explained/zombie-controller-2_hu1daff395d8979a57f29a46032a5f58e9_28108_355fbebd342800306f40cf9c793c54b6.webp 400w,
+/community/media/blogs/kafka-controller-broker-explained/zombie-controller-2_hu1daff395d8979a57f29a46032a5f58e9_28108_303b8045fe641bf13886fe6278809932.webp 760w,
+/community/media/blogs/kafka-controller-broker-explained/zombie-controller-2_hu1daff395d8979a57f29a46032a5f58e9_28108_1200x1200_fit_q75_h2_lanczos_2.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-controller-broker-explained/zombie-controller-2_hu1daff395d8979a57f29a46032a5f58e9_28108_355fbebd342800306f40cf9c793c54b6.webp"
+width="760"
+height="262"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;p>Broker 3でのGC処理が完了し復帰した際、未だに自身がControllerだと認識しています。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="Zombie Controller 3" srcset="
+/community/media/blogs/kafka-controller-broker-explained/zombie-controller-3_hu69d3de9c1c781c11547d8d4c73b1ae58_22958_9315415f925ce97da7a83dfc91d27d5d.webp 400w,
+/community/media/blogs/kafka-controller-broker-explained/zombie-controller-3_hu69d3de9c1c781c11547d8d4c73b1ae58_22958_8650d61272f471ed9e32358aaa70c1d0.webp 760w,
+/community/media/blogs/kafka-controller-broker-explained/zombie-controller-3_hu69d3de9c1c781c11547d8d4c73b1ae58_22958_1200x1200_fit_q75_h2_lanczos_2.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-controller-broker-explained/zombie-controller-3_hu69d3de9c1c781c11547d8d4c73b1ae58_22958_9315415f925ce97da7a83dfc91d27d5d.webp"
+width="760"
+height="129"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;p>結果として2つのControllerが稼働状態となり、異なる指示を並行して送る可能性があります。この状態はクラスタの状態として極めて悪く、適切に対応しなければ重大なデータ不整合を起こし得ます。&lt;/p>
+&lt;p>もしBroker 2(新たに選出されたController)がBroker 3から指示を受けた場合、このBroker 3が新たなControllerであるという保証は取れるのでしょうか？もちろんBroker 2も同様にGC Pauseに陥った可能性もあり、自分自身も最新のControllerではない可能性も否定出来ません。&lt;/p>
+&lt;p>何かしらの方法で、どのControllerが最新であり現在稼働すべきControllerであるのかを全員が判断出来る方法が必要です。&lt;/p>
+&lt;p>その方法は極めて単純に、epoch number&lt;sup id="fnref:3">&lt;a href="#fn:3" class="footnote-ref" role="doc-noteref">3&lt;/a>&lt;/sup>の利用により解決しています。epoch numberは単純に1ずつ増加する自然数であり、古いControllerのepoch numberが1の場合、新たに選出されたControllerのepoch numberは2になります。Brokerは単純に、最も大きなepoch numberを持つControllerからの指示を信じる事によりsplit brainを回避出来ます。このepoch numberはZookeeperに保全されます。(Zookeeperの&lt;a href="https://zookeeper.apache.org/doc/current/zookeeperInternals.html#sc_consistency" target="_blank" rel="noopener">Consistency Guarantee&lt;/a>の機能を利用しています。)&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="Epoch Number" srcset="
+/community/media/blogs/kafka-controller-broker-explained/epoch-number_hu0d56464ab7710eb0c72339108d848be9_45220_60f7d0456161f3cf7749b27aae0caeea.webp 400w,
+/community/media/blogs/kafka-controller-broker-explained/epoch-number_hu0d56464ab7710eb0c72339108d848be9_45220_0f8ab2d515879d560894819d31dc3add.webp 760w,
+/community/media/blogs/kafka-controller-broker-explained/epoch-number_hu0d56464ab7710eb0c72339108d848be9_45220_1200x1200_fit_q75_h2_lanczos_2.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-controller-broker-explained/epoch-number_hu0d56464ab7710eb0c72339108d848be9_45220_60f7d0456161f3cf7749b27aae0caeea.webp"
+width="760"
+height="288"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;p>Broker 1が最も大きい&lt;code>controllerEpoch&lt;/code>をZookeeperに保全する事になり、その他全てのより小さなepoch numberを持つControllerからの指示は無視されます。&lt;/p>
+&lt;h3 id="その他の役割">その他の役割&lt;/h3>
+&lt;p>Controllerには他にもやや地味な役割を担います：&lt;/p>
+&lt;ul>
+&lt;li>新しいTopicの作成&lt;/li>
+&lt;li>新しいPartitionの作成&lt;/li>
+&lt;li>Topicの削除&lt;/li>
+&lt;/ul>
+&lt;p>これら処理は、以前にはやや乱暴な方法で&lt;sup id="fnref:4">&lt;a href="#fn:4" class="footnote-ref" role="doc-noteref">4&lt;/a>&lt;/sup>処理されていましたが、version 0.11と1.0からはControllerへのリクエストにて処理する方法にと変更されています。この方法は&lt;a href="https://kafka.apache.org/documentation/#adminapi" target="_blank" rel="noopener">Admin Client API&lt;/a>として提供され、Kafkaクラスタへアクセスするアプリや管理者にも容易にアクセスすることが出来ます。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="2 Minutes Streaming" srcset="
+/community/media/blogs/kafka-acks-explained/two-minites-streaming_hue3ec6dcfa348a79b62ae3c8b92373579_136684_69bf0270813a154536ca6866d0eebe28.webp 400w,
+/community/media/blogs/kafka-acks-explained/two-minites-streaming_hue3ec6dcfa348a79b62ae3c8b92373579_136684_9b81ef5fad55639d712bb44153e40131.webp 760w,
+/community/media/blogs/kafka-acks-explained/two-minites-streaming_hue3ec6dcfa348a79b62ae3c8b92373579_136684_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-acks-explained/two-minites-streaming_hue3ec6dcfa348a79b62ae3c8b92373579_136684_69bf0270813a154536ca6866d0eebe28.webp"
+width="760"
+height="399"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+このエントリの著者である&lt;a href="../../authors/stanislav/">Stanislav Kozlovski&lt;/a> は&lt;a href="https://2minutestreaming.com/" target="_blank" rel="noopener">2 Minute Streaming&lt;/a>というKafkaに関する隔週ニュースレターを発行しています。是非購読してみてください。&lt;/p>
+&lt;div class="footnotes" role="doc-endnotes">
+&lt;hr>
+&lt;ol>
+&lt;li id="fn:1">
+&lt;p>(訳者注)これはZookeeperをクラスタのメタデータ管理に利用する場合の話で、&lt;a href="https://cwiki.apache.org/confluence/display/KAFKA/KIP-595%3A&amp;#43;A&amp;#43;Raft&amp;#43;Protocol&amp;#43;for&amp;#43;the&amp;#43;Metadata&amp;#43;Quorum" target="_blank" rel="noopener">KRaft&lt;/a>と呼ばれるRaftベースのコンセンサスモデルでは3以上のControllerが存在する必要があります。&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:2">
+&lt;p>(訳者注)Kafka2.4より、最寄りのレプリカからReadする(&lt;a href="https://cwiki.apache.org/confluence/display/KAFKA/KIP-392%3A&amp;#43;Allow&amp;#43;consumers&amp;#43;to&amp;#43;fetch&amp;#43;from&amp;#43;closest&amp;#43;replica" target="_blank" rel="noopener">KIP-392&lt;/a>)機能が提供されています。&amp;#160;&lt;a href="#fnref:2" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:3">
+&lt;p>”Fencing Token&amp;quot;とも呼ばれます。&amp;#160;&lt;a href="#fnref:3" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:4">
+&lt;p>Bashスクリプトによって直接Zookeeperを更新の上、Controllerやその他Brokerがその変更を受け取るのを待つ、という実装でした。&amp;#160;&lt;a href="#fnref:4" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;/div></description></item><item><title>Tiered Storageは何故そんなに重要なのか？</title><link>https://confluent-jp.github.io/community/blog/kip405-why-tiered-storage-important/</link><pubDate>Sun, 06 Aug 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/kip405-why-tiered-storage-important/</guid><description>&lt;h2 id="tiered-storageとは">Tiered Storageとは&lt;/h2>
 &lt;p>今年の後半にリリースが予定されている&lt;a href="https://cwiki.apache.org/confluence/display/KAFKA/Release&amp;#43;Plan&amp;#43;3.6.0" target="_blank" rel="noopener">Apache Kafka 3.6&lt;/a>には、Tiered Storageと呼ばれるKafkaコミュニティが待ち望んだ新機能が含まれる予定です。この機能は&lt;a href="https://cwiki.apache.org/confluence/display/KAFKA/KIP-405%3A&amp;#43;Kafka&amp;#43;Tiered&amp;#43;Storage" target="_blank" rel="noopener">KIP-405&lt;/a>として何年も前に登録されたKIPであり、長い期間をかけてようやくリリース目処が経ちました。&lt;/p>
 &lt;p>これまでKafkaのデータは常にBrokerのストレージに格納されていましたが、これを二層化して古いセグメントを自動的に退避するという機能です。Kafkaに格納されたイベントをオブジェクトストレージに退避するというプラクティスは一般的であり、これまではKafka Connectコネクタを使って自分で退避させるアプローチを取っていました。これをKafkaネイティブな機能として提供する、その役割をKafka Brokerが行うというものです。クライアントからはこのオペレーションは隠蔽化されており、新しいイベントも古いイベントも同じアプローチでアクセスする事が出来ます。&lt;/p>
 &lt;h2 id="tiered-storageの動き---図解">Tiered Storageの動き - 図解&lt;/h2>
