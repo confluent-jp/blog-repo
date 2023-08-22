@@ -70,7 +70,7 @@ loading="lazy" data-zoomable />&lt;/div>
 &lt;p>いくつかのユースケースでは、パフォーマンスを優先して&lt;code>acks=1&lt;/code>とする場合もあります。&lt;/p>
 &lt;p>&lt;code>acks=all&lt;/code>と設定した場合にメッセージの欠損は回避出来ます。新たにLeaderとなったISRには無いメッセージを既に取得したConsumerが出る可能性もありません。Producerからのacksを元にデータの整合性は保たれます。&lt;/p>
 &lt;h3 id="high-watermark-offset">High Watermark Offset&lt;/h3>
-&lt;p>Leaderは全てのISRへのレプリケーションが完了しない限りacksを返さないとします。この際Brokerは &lt;em>high watermark offset&lt;/em> と呼ばれる「全てのISRが取得済みの最大のオフセット」を管理しています。Leaderは合わせてConsumerからのリクエストに対してこのhigh watermark offsetを超えないメッセージのみ提供する事により、DBで言うところのNon-Repeatabl Readを回避しています。&lt;/p>
+&lt;p>Leaderは全てのISRへのレプリケーションが完了しない限りacksを返さないとします。この際Brokerは &lt;em>high watermark offset&lt;/em> と呼ばれる「全てのISRが取得済みの最大のオフセット」を管理しています。Leaderは合わせてConsumerからのリクエストに対してこのhigh watermark offsetを超えないメッセージのみ提供する事により、DBで言うところのNon-Repeatable Readを回避しています。&lt;/p>
 &lt;p>
 &lt;figure >
 &lt;div class="d-flex justify-content-center">
