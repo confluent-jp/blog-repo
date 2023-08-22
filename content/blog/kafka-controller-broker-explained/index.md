@@ -95,7 +95,7 @@ Leaderが機能不全に陥った場合、状況によってはISRが新しいLe
 ```acks=all```と設定した場合にメッセージの欠損は回避出来ます。新たにLeaderとなったISRには無いメッセージを既に取得したConsumerが出る可能性もありません。Producerからのacksを元にデータの整合性は保たれます。
 
 ### High Watermark Offset
-Leaderは全てのISRへのレプリケーションが完了しない限りacksを返さないとします。この際Brokerは *high watermark offset* と呼ばれる「全てのISRが取得済みの最大のオフセット」を管理しています。Leaderは合わせてConsumerからのリクエストに対してこのhigh watermark offsetを超えないメッセージのみ提供する事により、DBで言うところのNon-Repeatabl Readを回避しています。
+Leaderは全てのISRへのレプリケーションが完了しない限りacksを返さないとします。この際Brokerは *high watermark offset* と呼ばれる「全てのISRが取得済みの最大のオフセット」を管理しています。Leaderは合わせてConsumerからのリクエストに対してこのhigh watermark offsetを超えないメッセージのみ提供する事により、DBで言うところのNon-Repeatable Readを回避しています。
 
 ![High Watermark Offset](blogs/kafka-controller-broker-explained/high-watermark-offset.webp)
 
