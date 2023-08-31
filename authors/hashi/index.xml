@@ -1,4 +1,72 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>hashi | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/authors/hashi/</link><atom:link href="https://confluent-jp.github.io/community/authors/hashi/index.xml" rel="self" type="application/rss+xml"/><description>hashi</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Mon, 21 Aug 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/authors/hashi/avatar_hudc0c7c8d0c95e5f09e296b73be3a2ab5_129312_270x270_fill_q75_lanczos_center.jpg</url><title>hashi</title><link>https://confluent-jp.github.io/community/authors/hashi/</link></image><item><title>解剖 Kafka Controller Broker</title><link>https://confluent-jp.github.io/community/blog/kafka-controller-broker-explained/</link><pubDate>Mon, 21 Aug 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/kafka-controller-broker-explained/</guid><description>&lt;blockquote>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>hashi | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/authors/hashi/</link><atom:link href="https://confluent-jp.github.io/community/authors/hashi/index.xml" rel="self" type="application/rss+xml"/><description>hashi</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Thu, 31 Aug 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/authors/hashi/avatar_hudc0c7c8d0c95e5f09e296b73be3a2ab5_129312_270x270_fill_q75_lanczos_center.jpg</url><title>hashi</title><link>https://confluent-jp.github.io/community/authors/hashi/</link></image><item><title>Confluent Platform 7.5リリース</title><link>https://confluent-jp.github.io/community/blog/confluent-platform-7.5-announcement/</link><pubDate>Thu, 31 Aug 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/confluent-platform-7.5-announcement/</guid><description>&lt;p>Confluent Platform 7.5がリリースされました。 &lt;a href="https://www.confluent.io/blog/introducing-confluent-platform-7-5/" target="_blank" rel="noopener">Confluent Blog&lt;/a> 内包されるApache Kafkaのバージョンは&lt;a href="https://www.youtube.com/watch?v=BVxDFL5iTx8" target="_blank" rel="noopener">3.5&lt;/a>となります。&lt;/p>
+&lt;p>コアエンジンであるApache Kafkaのアップグレードだけでなく、エンタープライズ ソリューションとしてのConfluent Platformとしての機能追加や改善も含まれています。&lt;/p>
+&lt;h3 id="sso-for-control-center-c3-for-confluent-platform">SSO for Control Center (C3) for Confluent Platform&lt;/h3>
+&lt;p>Confluent Control CenterはConfluent Platformにおける管理ポータルとしての役割から、ごく一部のSREメンバーからのみアクセスされるという特殊なコンポーネントです。この為これまではアクセス制御のアプローチについては少し限定的でしたが、Broker等と同様OAuth2ベースの認証/認可の方法でアクセスする事が可能となりました。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="OIDC SSO to Conntrol Center" srcset="
+/community/media/blogs/confluent-platform-7.5-announcement/sso_hu67db87b51405a1db647394d2cb092ba4_138944_003085067e9660f4d2a75d91d83a2c4c.webp 400w,
+/community/media/blogs/confluent-platform-7.5-announcement/sso_hu67db87b51405a1db647394d2cb092ba4_138944_1ba41c13ea805b6d452f9ea265a8d6d8.webp 760w,
+/community/media/blogs/confluent-platform-7.5-announcement/sso_hu67db87b51405a1db647394d2cb092ba4_138944_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/confluent-platform-7.5-announcement/sso_hu67db87b51405a1db647394d2cb092ba4_138944_003085067e9660f4d2a75d91d83a2c4c.webp"
+width="760"
+height="349"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;h3 id="confluent-rest-proxy-produce-api-v3">Confluent REST Proxy Produce API v3&lt;/h3>
+&lt;p>Confluent REST ProxyはKafka BrokerへのRESTベースのアクセスを可能としており、Confluent Platform/Cloudの双方で幅広く活用されています。一方、通常のKafkaプロトコルベースのアクセスに比べると制限もあり、これまでも段階的に改善がなされています。今回のProduce API v3では：&lt;/p>
+&lt;ul>
+&lt;li>カスタムヘッダーの追加 (トレーシングID、等)&lt;/li>
+&lt;li>KeyとValueで異なるシリアライザの設定&lt;/li>
+&lt;/ul>
+&lt;p>が可能となります。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="REST Proxy Produce API v3" srcset="
+/community/media/blogs/confluent-platform-7.5-announcement/rest-proxy-produce-v3_hue84c4db39461140502f9bf10a6ad3c39_107527_83989a5797af7fe63286be6fe5bcda60.webp 400w,
+/community/media/blogs/confluent-platform-7.5-announcement/rest-proxy-produce-v3_hue84c4db39461140502f9bf10a6ad3c39_107527_a2df8c6c08019d4a0d21e3f2b3a29d54.webp 760w,
+/community/media/blogs/confluent-platform-7.5-announcement/rest-proxy-produce-v3_hue84c4db39461140502f9bf10a6ad3c39_107527_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/confluent-platform-7.5-announcement/rest-proxy-produce-v3_hue84c4db39461140502f9bf10a6ad3c39_107527_83989a5797af7fe63286be6fe5bcda60.webp"
+width="760"
+height="333"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;h3 id="bidirectional-cluster-linking">Bidirectional Cluster Linking&lt;/h3>
+&lt;p>双方向のCluster Linkingの設定が可能となりました。これまでも一方向のリンクを2本貼れば実際のレプリケーションを双方向にすることは可能でした。Consuemr観点ではローカルのTopicとMirror Topicそれぞれ個別のTopicを同時にConsumeするモデルであり、それぞれへのOffset Commitを実行します。この際、Mirror TopicへのOffset CommitはソースとなるTopicには反映されないので、障害時には部分的なConsumer Offset情報しか連携されていない状況となります。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="2 Unidirectional Cluster Linking" srcset="
+/community/media/blogs/confluent-platform-7.5-announcement/uni-directional-cluster-linking-offset_huc479c2906f04f32b878c3e28e716f33e_62357_a7ec30fb3db45ac5c6af35290b9d3c04.webp 400w,
+/community/media/blogs/confluent-platform-7.5-announcement/uni-directional-cluster-linking-offset_huc479c2906f04f32b878c3e28e716f33e_62357_034036236e3424798a84919e80a03245.webp 760w,
+/community/media/blogs/confluent-platform-7.5-announcement/uni-directional-cluster-linking-offset_huc479c2906f04f32b878c3e28e716f33e_62357_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/confluent-platform-7.5-announcement/uni-directional-cluster-linking-offset_huc479c2906f04f32b878c3e28e716f33e_62357_a7ec30fb3db45ac5c6af35290b9d3c04.webp"
+width="760"
+height="420"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+双方向のCluster Linkingは双方向へのリンクが1セットとして扱われる為、双方のクラスタでのOffset Commit情報も合わせて同期されます。
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="Bidirectional Cluster Linking" srcset="
+/community/media/blogs/confluent-platform-7.5-announcement/bidirectional-cluster-linking-cp-7-5_hu3a52438f693c3a662eb31fd1fd393da7_114667_83366575928d4eb4fc54ae197fca70b1.webp 400w,
+/community/media/blogs/confluent-platform-7.5-announcement/bidirectional-cluster-linking-cp-7-5_hu3a52438f693c3a662eb31fd1fd393da7_114667_bf7aca812d06fb55ea4bd64298312a51.webp 760w,
+/community/media/blogs/confluent-platform-7.5-announcement/bidirectional-cluster-linking-cp-7-5_hu3a52438f693c3a662eb31fd1fd393da7_114667_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/confluent-platform-7.5-announcement/bidirectional-cluster-linking-cp-7-5_hu3a52438f693c3a662eb31fd1fd393da7_114667_83366575928d4eb4fc54ae197fca70b1.webp"
+width="760"
+height="339"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;h3 id="参考">参考&lt;/h3>
+&lt;ul>
+&lt;li>&lt;a href="https://www.confluent.io/blog/introducing-confluent-platform-7-5/" target="_blank" rel="noopener">Introducing Confluent Platform 7.5 (Confluent Blog)&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://docs.confluent.io/platform/7.5/release-notes/index.html" target="_blank" rel="noopener">Confluent Platform 7.5 Release Notes&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://docs.confluent.io/platform/current/kafka-rest/index.html" target="_blank" rel="noopener">REST Proxy&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://docs.confluent.io/platform/7.5/control-center/security/sso/overview.html#sso-for-c3" target="_blank" rel="noopener">Single Sign-On (SSO) for Confluent Control Center&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#bidirectional-mode" target="_blank" rel="noopener">Cluster Linking - Bidirectional Mode&lt;/a>&lt;/li>
+&lt;/ul></description></item><item><title>解剖 Kafka Controller Broker</title><link>https://confluent-jp.github.io/community/blog/kafka-controller-broker-explained/</link><pubDate>Mon, 21 Aug 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/kafka-controller-broker-explained/</guid><description>&lt;blockquote>
 &lt;p>このブログエントリはKafkaコミッタである Stanislav Kozlovski(&lt;a href="https://https://twitter.com/BdKozlovski" target="_blank" rel="noopener">𝕏&lt;/a>|&lt;a href="https://www.linkedin.com/in/stanislavkozlovski/" target="_blank" rel="noopener">Ln&lt;/a>) のサイトで2018/10/31に公開された&lt;a href="https://stanislavkozlovski.medium.com/apache-kafkas-distributed-system-firefighter-the-controller-broker-1afca1eae302" target="_blank" rel="noopener">Apache Kafka’s Distributed System Firefighter — The Controller Broker&lt;/a>の日本語訳です。Stanislav本人の了承を得て翻訳/公開しています。&lt;/p>
 &lt;/blockquote>
 &lt;h2 id="はじめに">はじめに&lt;/h2>
