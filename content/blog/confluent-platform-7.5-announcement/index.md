@@ -1,6 +1,6 @@
 ---
 title: Confluent Platform 7.5リリース
-summary: Apache Kafka ３.5、双方向Cluster Linking、REST Proxy Producer API v3、Control CenterのOpenID Connectアクセス、などなど。
+summary: Apache Kafka 3.5、双方向Cluster Linking、REST Proxy Producer API v3、Control CenterのOpenID Connectアクセス、などなど。
 authors:
   - hashi
 tags:
