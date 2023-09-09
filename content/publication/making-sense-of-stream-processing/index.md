@@ -2,7 +2,7 @@
 title: "Making Sense of Stream Processing"
 summary: "『データ指向アプリケーションデザイン』の著者であるクレップマン博士によるストリーム処理、中でもKafkaを利用した新たなイベント駆動モデルの概要についての入門書です。『Database Inside Out (データベースの内部構造を広く展開する)』の概念とその可能性について詳しく説明されています。 (英語)"
 authors:
-  - hashi
+  - admin
 tags:
   - ebook
   - Kafka Core

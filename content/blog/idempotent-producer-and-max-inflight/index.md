@@ -20,7 +20,7 @@ lastmod: '2023-07-03T00:00:00Z'
 ただこのエンハンスメントにも制限がありました。この制限は後日、ひっそりと一つのPRによって解消されています。話題には上りませんでしたが、この機能が広く利用される上では非常に重要なエンハンスメントでした。
 
 ## Exactly Once Semantics
-Kafka初期において最も注目を集めたエンハンスメントの一つに[KIP-98 - Exactly Once Delivery and Transactional Messaging](https://cwiki.apache.org/confluence/display/KAFKA/KIP-98+-+Exactly+Once+Delivery+and+Transactional+Messaging) があります。「メッセージ基盤においてExactly Onceは不可能」という[ビザンチン将軍問題](https://ja.wikipedia.org/wiki/%E3%83%93%E3%82%B6%E3%83%B3%E3%83%81%E3%83%B3%E5%B0%86%E8%BB%8D%E5%95%8F%E9%A1%8C)観点からの懐疑的な意見も多く議論を呼びました。そもそもKafkaが唱えるExactly Onceのスコープは何か、そして何がその前提となっているのかについてはKafka初期開発者であるネハさんを始めとして[具体的な説明](https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/)もたくさんなされています。[^1]
+Kafka初期において最も注目を集めたエンハンスメントの一つに[KIP-98 - Exactly Once Delivery and Transactional Messaging](https://cwiki.apache.org/confluence/display/KAFKA/KIP-98+-+Exactly+Once+Delivery+and+Transactional+Messaging) があります。「メッセージ基盤においてExactly Onceは不可能」という[二人の将軍問題](https://ja.wikipedia.org/wiki/%E4%BA%8C%E4%BA%BA%E3%81%AE%E5%B0%86%E8%BB%8D%E5%95%8F%E9%A1%8C) 観点からの懐疑的な意見も多く議論を呼びました。そもそもKafkaが唱えるExactly Onceのスコープは何か、そして何がその前提となっているのかについてはKafka初期開発者であるネハさんを始めとして[具体的な説明](https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/)もたくさんなされています。[^1]
 
 実際のKIPに記載されている設定条件は以下で、これらも同様に適切に設定しない限りは```enable.idempotency=true```と設定してもProducerの冪等性を確保する保証はないと記載されています (仮にIdempotent Producerとして動いてPIDに値が設定されているとしても)。
 ```bash
