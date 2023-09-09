@@ -1,8 +1,118 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Exactly Once Semantics | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/tag/exactly-once-semantics/</link><atom:link href="https://confluent-jp.github.io/community/tag/exactly-once-semantics/index.xml" rel="self" type="application/rss+xml"/><description>Exactly Once Semantics</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Mon, 03 Jul 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/media/icon_hubade5daff97c80353b10ab16b141ee15_5385_512x512_fill_lanczos_center_3.png</url><title>Exactly Once Semantics</title><link>https://confluent-jp.github.io/community/tag/exactly-once-semantics/</link></image><item><title>Exactly Onceとmax.in.flightについて</title><link>https://confluent-jp.github.io/community/blog/idempotent-producer-and-max-inflight/</link><pubDate>Mon, 03 Jul 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/idempotent-producer-and-max-inflight/</guid><description>&lt;h2 id="はじめに">はじめに&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Exactly Once Semantics | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/tag/exactly-once-semantics/</link><atom:link href="https://confluent-jp.github.io/community/tag/exactly-once-semantics/index.xml" rel="self" type="application/rss+xml"/><description>Exactly Once Semantics</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Sat, 09 Sep 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/media/icon_hubade5daff97c80353b10ab16b141ee15_5385_512x512_fill_lanczos_center_3.png</url><title>Exactly Once Semantics</title><link>https://confluent-jp.github.io/community/tag/exactly-once-semantics/</link></image><item><title>KafkaとトランザクションとExactly Once</title><link>https://confluent-jp.github.io/community/blog/kafka-transaction-how-it-works/</link><pubDate>Sat, 09 Sep 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/kafka-transaction-how-it-works/</guid><description>&lt;h2 id="はじめに">はじめに&lt;/h2>
+&lt;p>Kafkaの利用は&lt;a href="https://www.youtube.com/watch?v=9uCP3qHNbWw" target="_blank" rel="noopener">結果整合性&lt;/a>の概念の浸透とその実践的な活用ユースケースの登場によって飛躍的に広がりました。それまでのリレーショナルモデルに見られる&lt;a href="https://ja.wikipedia.org/wiki/ACID_%28%E3%82%B3%E3%83%B3%E3%83%94%E3%83%A5%E3%83%BC%E3%82%BF%E7%A7%91%E5%AD%A6%29" target="_blank" rel="noopener">ACID特性&lt;/a>を前提とした整合性の管理ではなく、&lt;a href="https://martin.kleppmann.com/2015/06/02/change-capture-at-berlin-buzzwords.html" target="_blank" rel="noopener">Change Data Capture&lt;/a>によって整合性を整理するという大きく異なるアプローチであり、既存の概念に挑戦するものでした。&lt;/p>
+&lt;p>リレーショナルモデルにおけるトランザクションではない「今ではない近い将来にはデータは整合性を保った状態で連携先に届く」というアプローチである為、Change Data Captureを活用したソリューションにトランザクションの概念が登場すると混乱を招く事も多くあります。&lt;/p>
+&lt;p>Kafkaもトランザクションをサポートしており、データを整合性を保ったままリアルタイムに扱う上で非常に重要な概念です。しかしながら、Kafkaのトランザクションの目的はリレーショナルモデルのそれとは大きく異なります。&lt;/p>
+&lt;p>このエントリは、Kafkaにおけるトランザクションがどういうものであるかの説明と、トランザクションにまつわる様々な誤解を解く事を目的としています。&lt;/p>
+&lt;h2 id="トランザクションとexactly-once">トランザクションとExactly Once&lt;/h2>
+&lt;p>メッセージングの世界では「確実に1度だけメッセージをデリバリーする」という事が極めて難しいとされてきました。&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>一方、メッセージを (最低1回以上) 確実にデリバリーする手法は論理的にも実装的にも比較的容易である為、ほとんどのメッセージング基盤はこの手法を主に採用しています。データを送る側 (Producer) で1回だけ送るというのが難しい為、受け取り側 (Consumer) 側で重複メッセージの処理を行う必要があります。 &lt;sup id="fnref:2">&lt;a href="#fn:2" class="footnote-ref" role="doc-noteref">2&lt;/a>&lt;/sup> OSSとして公開された当時のKafkaもその一つでした。&lt;/p>
+&lt;p>Kafkaが&lt;a href="https://www.confluent.io/ja-jp/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/" target="_blank" rel="noopener">Exactly Once Delivery&lt;/a>機能をサポートしたのはバージョン0.11です。この頃より、結果整合性を前提としたソリューションの土台となり得るKafkaの利用が飛躍的に広がりました。&lt;/p>
+&lt;p>Exactly Once Deliveryに関するKIPの正式名は&lt;a href="https://cwiki.apache.org/confluence/display/KAFKA/KIP-98&amp;#43;-&amp;#43;Exactly&amp;#43;Once&amp;#43;Delivery&amp;#43;and&amp;#43;Transactional&amp;#43;Messaging" target="_blank" rel="noopener">Exactly Once Delivery and Transactional Messaging&lt;/a>であり、Idempotent Producerとトランザクションの双方を纏めて1つのKIPで定義しています。この為、Exactly Once Deliveryを達成する為には必ずトランザクションの導入が必要なよう誤解されている事も多いと思います。当然これら2つには強い関連性がある為同じKIP内で説明されていますが、それぞれ異なる機能であり、分解して理解する必要があります。&lt;/p>
+&lt;p>Idempotent Producerについては&lt;a href="../idempotent-producer-and-max-inflight/">こちらのブログエントリ&lt;/a>でご紹介していますが、具体的にはProducerがKafkaに対してExactly Onceでメッセージを送る為に必要な機能であり、Kafkaトランザクション機能とは異なります。つまり明治的にトランザクションを使用しなくても、ProducerからKafkaへの書き込みはExactly Onceに指定できます。&lt;/p>
+&lt;h3 id="kafka-transaction">Kafka Transaction&lt;/h3>
+&lt;p>Kafkaトランザクション自体はリレーショナルDBにおけるトランザクションと近い思想を持つもので、異なるエンティティへの書き込み処理をアトミックに扱える機能ですが、Kafkaの世界では対象がTopicとなります。つまり、異なるTopicへの書き込みをCommit/Abortする事ができる機能です。利用方法もリレーショナルDB APIへのプログラムアクセスと似ており：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kt">void&lt;/span> &lt;span class="nf">initTransactions&lt;/span>&lt;span class="o">()&lt;/span> &lt;span class="kd">throws&lt;/span> &lt;span class="n">IllegalStateException&lt;/span>&lt;span class="o">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kt">void&lt;/span> &lt;span class="nf">beginTransaction&lt;/span>&lt;span class="o">()&lt;/span> &lt;span class="kd">throws&lt;/span> &lt;span class="n">ProducerFencedException&lt;/span>&lt;span class="o">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kt">void&lt;/span> &lt;span class="nf">commitTransaction&lt;/span>&lt;span class="o">()&lt;/span> &lt;span class="kd">throws&lt;/span> &lt;span class="n">ProducerFencedException&lt;/span>&lt;span class="o">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kt">void&lt;/span> &lt;span class="nf">abortTransaction&lt;/span>&lt;span class="o">()&lt;/span> &lt;span class="kd">throws&lt;/span> &lt;span class="n">ProducerFencedException&lt;/span>&lt;span class="o">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kt">void&lt;/span> &lt;span class="nf">sendOffsetsToTransaction&lt;/span>&lt;span class="o">(&lt;/span>&lt;span class="n">Map&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">TopicPartition&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="n">OffsetAndMetadata&lt;/span>&lt;span class="o">&amp;gt;&lt;/span> &lt;span class="n">offsets&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">String&lt;/span> &lt;span class="n">consumerGroupId&lt;/span>&lt;span class="o">)&lt;/span> &lt;span class="kd">throws&lt;/span> &lt;span class="n">ProducerFencedException&lt;/span>&lt;span class="o">;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>これらメソッドを扱いプログラムコード内でアトミック処理の制御を行う事が出来ます。当然、&lt;code>Topic A&lt;/code>と&lt;code>Topic B&lt;/code>への書き込みをトランザクションで括ることも出来ます。しかしながら、リレーショナルモデル同様のトランザクションの使い方では、Kafkaへのトランザクション処理の導入が高い優先度で扱われたのも、この機能がExactly Once Deliveryと関連づけられ同一のKIP内で設計されていることも説明できません。&lt;/p>
+&lt;p>上記には一般的なトランザクション処理では見られないメソッドも含まれていますが&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-java" data-lang="java">&lt;span class="line">&lt;span class="cl">&lt;span class="kt">void&lt;/span> &lt;span class="nf">sendOffsetsToTransaction&lt;/span>&lt;span class="o">(&lt;/span>&lt;span class="n">Map&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">TopicPartition&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="n">OffsetAndMetadata&lt;/span>&lt;span class="o">&amp;gt;&lt;/span> &lt;span class="n">offsets&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">String&lt;/span> &lt;span class="n">consumerGroupId&lt;/span>&lt;span class="o">)&lt;/span> &lt;span class="kd">throws&lt;/span> &lt;span class="n">ProducerFencedException&lt;/span>&lt;span class="o">;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>このメソッドがExactly Once Deliveryとトランザクションを関連付ける重要な役割を担っています。&lt;/p>
+&lt;h3 id="sendoffsetstotransaction">sendOffsetsToTransaction&lt;/h3>
+&lt;p>このメソッドが何をするかは名前からもある程度推測できますが、「処理した一連のConsumer OffsetをConsumer Group Coordinatorに送りつつ、 &lt;strong>現在のトランザクションに関連付ける&lt;/strong> 」メソッドです。少々アクロバティックな処理ですが、この処理をトランザクションAPIに定義するには必要性があります。&lt;/p>
+&lt;p>このメソッドは、全く異なる2つの処理を1メソッドに纏めるというタブーに近いメソッドです。さらに注意すべきなのは、トランザクションはProducerに関わる機能であり、Consumer OffsetはConsumerに関わる機能です。つまりこのメソッドはProducerでもありConsumerでもある処理でしか存在意義が無いメソッドです。&lt;/p>
+&lt;p>一般的なメッセージングモデルではあまり検討しないこの処理ですが、Kafkaのエコシステムでは&lt;a href="https://www.confluent.io/ja-jp/online-talks/benefits-of-stream-processing-and-apache-kafka-use-cases-on-demand/" target="_blank" rel="noopener">ストリーム処理&lt;/a>における根本的かつ重要な要件となります。&lt;/p>
+&lt;h2 id="ストリーム処理とexactly-once">ストリーム処理とExactly Once&lt;/h2>
+&lt;h3 id="ストリーム処理">ストリーム処理&lt;/h3>
+&lt;p>ストリーム処理とは、一般的なバッチ処理同様にInputとOutputを持つデータ処理を、中間的なストレージを経由する事により一連のデータフローとして形成するアプローチです。バッチとの違いは、その中間的なストレージがcsvファイルやDBの中間テーブルではなくKafka Topicを利用する事であり、これによりバッチ同様のデータフローをリアルタイム&lt;sup id="fnref:3">&lt;a href="#fn:3" class="footnote-ref" role="doc-noteref">3&lt;/a>&lt;/sup>に実行する事が出来る点です。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="ストリーム処理 - 論理フロー" srcset="
+/community/media/blogs/kafka-transaction-how-it-works/stream-processing-logical-view_hu7ad9a819e248931517be742776eecf4e_31936_5a33e9959c337d50f76925b46d5cd296.webp 400w,
+/community/media/blogs/kafka-transaction-how-it-works/stream-processing-logical-view_hu7ad9a819e248931517be742776eecf4e_31936_d1371efabf84eae9e2b715826d01647c.webp 760w,
+/community/media/blogs/kafka-transaction-how-it-works/stream-processing-logical-view_hu7ad9a819e248931517be742776eecf4e_31936_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-transaction-how-it-works/stream-processing-logical-view_hu7ad9a819e248931517be742776eecf4e_31936_5a33e9959c337d50f76925b46d5cd296.webp"
+width="760"
+height="261"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;p>この例ではSourceから発行されたイベントを、エンリッチしてアプリやDBに格納するフローと、集約した後ダッシュボードに転送するフローを表現しています。イベントはKafkaに発行されてから、Kafka内で変更/加工された後にSinkへとリアルタイムに繋げるデータフローとなっています。&lt;/p>
+&lt;p>これはあくまで論理的なフローですが、実際にはデータフロー内の処理は全てKafkaとの通信で成り立っています。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="ストリーム処理 - コミュニケーションフロー" srcset="
+/community/media/blogs/kafka-transaction-how-it-works/stream-processing-communication-view_hu031934ae688d3286237b88f738ac776f_51202_00f4cd7a6318d7c24cfe9323baff398c.webp 400w,
+/community/media/blogs/kafka-transaction-how-it-works/stream-processing-communication-view_hu031934ae688d3286237b88f738ac776f_51202_6af0e3f468c88ba8a5049d51beed7777.webp 760w,
+/community/media/blogs/kafka-transaction-how-it-works/stream-processing-communication-view_hu031934ae688d3286237b88f738ac776f_51202_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-transaction-how-it-works/stream-processing-communication-view_hu031934ae688d3286237b88f738ac776f_51202_00f4cd7a6318d7c24cfe9323baff398c.webp"
+width="724"
+height="418"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;p>SourceはProducerとして機能し、DBやダッシュボードへの転送はSink Connectorを利用しています。これらデータフローの両端はProducerもしくはConsumerのいずれかの役割を果たします。&lt;/p>
+&lt;p>その他の処理はイベントを受け取り、加工の上次の処理に渡す為、ProducerでありConsumerである必要があります。より具体的には「前処理がProducerでイベント送ったTopicを、その次の処理がConsumeする」、この繰り返しでデータフローのトポロジーを形成します。このトポロジーをTopicも含めたフローで表現すると：&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="ストリーム処理におけるTopic" srcset="
+/community/media/blogs/kafka-transaction-how-it-works/stream-procerssing-and-topics_hue370a54ad1ec1d1e167b7c34cfea6f36_45782_343facf8cdd825b71136fcb23fa6d7c9.webp 400w,
+/community/media/blogs/kafka-transaction-how-it-works/stream-procerssing-and-topics_hue370a54ad1ec1d1e167b7c34cfea6f36_45782_a952ea042c1563d13fb4d4600816611c.webp 760w,
+/community/media/blogs/kafka-transaction-how-it-works/stream-procerssing-and-topics_hue370a54ad1ec1d1e167b7c34cfea6f36_45782_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-transaction-how-it-works/stream-procerssing-and-topics_hue370a54ad1ec1d1e167b7c34cfea6f36_45782_343facf8cdd825b71136fcb23fa6d7c9.webp"
+width="760"
+height="522"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;p>このように分解できます。ここではProduceを点線、Consumeを実線で表現しています。処理自体はKafkaのTopicを境に完全に分離された構成となっており、バッチ処理における中間ストレージと同じ役割を果たしています。&lt;/p>
+&lt;h3 id="exactly-once">Exactly Once&lt;/h3>
+&lt;p>この処理のEnd-to-EndでExactly Onceを達成するには？という命題の為にKafka Transactionは定義されています。&lt;/p>
+&lt;p>Kafka Consumerは、メッセージの処理後にConsumer Offsetを&lt;code>commitSync/commitAsync&lt;/code>というメソッドを使って更新します。このオフセットコミットが行われる事により、仮に処理後にConsumerのプロセスが落ちたとしても、新しいプロセスが引き継いで処理を継続する事が出来ます。&lt;/p>
+&lt;p>しかしながら、処理後 (ストリーム処理ではConsumeし、データの処理を実行し、別のTopicにProduce後) に何らかの障害によってプロセスを失った場合、引き継いだプロセスはコミットされる前のオフセットをもとに処理、つまり同じメッセージを消費し再処理することとなります。これではProduceに関してはIdempotent Producerの設定によってExactly OnceでKafkaに書き込めても、End-to-EndのフローではExcatly Onceを保証出来ません。&lt;/p>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="ストリーム処理とトランザクション" srcset="
+/community/media/blogs/kafka-transaction-how-it-works/topics-and-transaction_hu2ddcc10237c855413716f2a234f348cc_66959_15c00aacbb43c2d849507986e092ea51.webp 400w,
+/community/media/blogs/kafka-transaction-how-it-works/topics-and-transaction_hu2ddcc10237c855413716f2a234f348cc_66959_b6605ac37ee1b67734801f3b79b7721a.webp 760w,
+/community/media/blogs/kafka-transaction-how-it-works/topics-and-transaction_hu2ddcc10237c855413716f2a234f348cc_66959_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/kafka-transaction-how-it-works/topics-and-transaction_hu2ddcc10237c855413716f2a234f348cc_66959_15c00aacbb43c2d849507986e092ea51.webp"
+width="760"
+height="458"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+&lt;/p>
+&lt;p>Kafkaにおけるトランザクション、そして中でも先ほど言及した&lt;code>sendOffsetsToTransaction&lt;/code>はまさしくこのProduceとConsumer Offsetのコミットをアトミックな処理としてに定義する事ができます。これにより、どのタイミングで障害が発生してもEnd-to-EndでExactly Once Deliveryを達成する事が出来ます。&lt;sup id="fnref:4">&lt;a href="#fn:4" class="footnote-ref" role="doc-noteref">4&lt;/a>&lt;/sup>&lt;/p>
+&lt;h3 id="まとめ">まとめ&lt;/h3>
+&lt;p>Kafka TransactionとIdempotent Producerは同じKIP内で定義されており、また併せて説明される事が多い機能ではありますが、使われる場所と用途は全く異なります。ただこれらはKafkaにおけるExactly Once Deliveryにおいてお互いを補完するものであり、双方が揃って初めてEnd-to-EndのExactly Once Deliveryが達成出来る事が分かります。&lt;/p>
+&lt;div class="footnotes" role="doc-endnotes">
+&lt;hr>
+&lt;ol>
+&lt;li id="fn:1">
+&lt;p>分散システムにおける&lt;a href="https://ja.wikipedia.org/wiki/%E4%BA%8C%E4%BA%BA%E3%81%AE%E5%B0%86%E8%BB%8D%E5%95%8F%E9%A1%8C" target="_blank" rel="noopener">二人の将軍問題&lt;/a>等を用いて言及されています。&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:2">
+&lt;p>この為Consumer側で冪等性を確保した処理が求められます。&amp;#160;&lt;a href="#fnref:2" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:3">
+&lt;p>一般的に「リアルタイム処理」とは数ミリ秒誤差のものを指す為、厳密には準リアルタイムと呼ぶのが相応しいかも知れません。Kafkaのストリーム処理におけるEnd-to-Endのレイテンシは、処理にもよりますが数百ミリ秒から数秒程度のレイテンシとなります。&amp;#160;&lt;a href="#fnref:3" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:4">
+&lt;p>図にもありますが、Consumerも未コミット状態のデータにアクセスしてはいけないので、分離レベルをRead Committedに指定する必要があります。ここはリレーショナルモデルの概念をそのまま踏襲しています。&amp;#160;&lt;a href="#fnref:4" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;/div></description></item><item><title>Exactly Onceとmax.in.flightについて</title><link>https://confluent-jp.github.io/community/blog/idempotent-producer-and-max-inflight/</link><pubDate>Mon, 03 Jul 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/idempotent-producer-and-max-inflight/</guid><description>&lt;h2 id="はじめに">はじめに&lt;/h2>
 &lt;p>メッセージブローカー界隈でのデリバリー保証はAt Least Once (必ず送信するが1度以上送信する可能性がある) というのが常識であり、データを受け取るConsumer側で冪等性を保証する必要がありました。そのExactly Once SemantisがKafkaでサポートされた時には多くの反響を呼びましたが、この設定は最近DefaultでOnになる程Kafkaコミュニティでは広く利用されています。&lt;/p>
 &lt;p>ただこのエンハンスメントにも制限がありました。この制限は後日、ひっそりと一つのPRによって解消されています。話題には上りませんでしたが、この機能が広く利用される上では非常に重要なエンハンスメントでした。&lt;/p>
 &lt;h2 id="exactly-once-semantics">Exactly Once Semantics&lt;/h2>
-&lt;p>Kafka初期において最も注目を集めたエンハンスメントの一つに&lt;a href="https://cwiki.apache.org/confluence/display/KAFKA/KIP-98&amp;#43;-&amp;#43;Exactly&amp;#43;Once&amp;#43;Delivery&amp;#43;and&amp;#43;Transactional&amp;#43;Messaging" target="_blank" rel="noopener">KIP-98 - Exactly Once Delivery and Transactional Messaging&lt;/a> があります。「メッセージ基盤においてExactly Onceは不可能」という&lt;a href="https://ja.wikipedia.org/wiki/%E3%83%93%E3%82%B6%E3%83%B3%E3%83%81%E3%83%B3%E5%B0%86%E8%BB%8D%E5%95%8F%E9%A1%8C" target="_blank" rel="noopener">ビザンチン将軍問題&lt;/a>観点からの懐疑的な意見も多く議論を呼びました。そもそもKafkaが唱えるExactly Onceのスコープは何か、そして何がその前提となっているのかについてはKafka初期開発者であるネハさんを始めとして&lt;a href="https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/" target="_blank" rel="noopener">具体的な説明&lt;/a>もたくさんなされています。&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>&lt;/p>
+&lt;p>Kafka初期において最も注目を集めたエンハンスメントの一つに&lt;a href="https://cwiki.apache.org/confluence/display/KAFKA/KIP-98&amp;#43;-&amp;#43;Exactly&amp;#43;Once&amp;#43;Delivery&amp;#43;and&amp;#43;Transactional&amp;#43;Messaging" target="_blank" rel="noopener">KIP-98 - Exactly Once Delivery and Transactional Messaging&lt;/a> があります。「メッセージ基盤においてExactly Onceは不可能」という&lt;a href="https://ja.wikipedia.org/wiki/%E4%BA%8C%E4%BA%BA%E3%81%AE%E5%B0%86%E8%BB%8D%E5%95%8F%E9%A1%8C" target="_blank" rel="noopener">二人の将軍問題&lt;/a> 観点からの懐疑的な意見も多く議論を呼びました。そもそもKafkaが唱えるExactly Onceのスコープは何か、そして何がその前提となっているのかについてはKafka初期開発者であるネハさんを始めとして&lt;a href="https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/" target="_blank" rel="noopener">具体的な説明&lt;/a>もたくさんなされています。&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>&lt;/p>
 &lt;p>実際のKIPに記載されている設定条件は以下で、これらも同様に適切に設定しない限りは&lt;code>enable.idempotency=true&lt;/code>と設定してもProducerの冪等性を確保する保証はないと記載されています (仮にIdempotent Producerとして動いてPIDに値が設定されているとしても)。&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">&lt;span class="nv">ack&lt;/span>&lt;span class="o">=&lt;/span>all
 &lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">retries &amp;gt; &lt;span class="m">1&lt;/span>
