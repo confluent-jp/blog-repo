@@ -25,13 +25,13 @@ Kafkaもトランザクションをサポートしており、データを整合
 このエントリは、Kafkaにおけるトランザクションがどういうものであるかの説明と、トランザクションにまつわる様々な誤解を解く事を目的としています。
 
 ## トランザクションとExactly Once
-メッセージングの世界では「確実に1度だけメッセージをデリバリーする」という事が極めて難しいとされてきました。[^1]一方、メッセージを (最低1回以上) 確実にデリバリーする手法は論理的にも実装的にも比較的容易である為、ほとんどのメッセージング基盤はこの手法を主に採用しています。データを送る側 (Producer) で1回だけ送るというのが難しい為、受け取り側 (Consumer) 側で重複メッセージの処理を行う必要があります。 [^2] OSSとして公開された当時のKafkaもその一つでした。
+メッセージングの世界では「確実に1度だけメッセージをデリバリーする」という事が極めて難しいとされてきました。[^1] 一方、メッセージを (最低1回以上) 確実にデリバリーする手法は論理的にも実装的にも比較的容易である為、ほとんどのメッセージング基盤はこの手法を主に採用しています。OSSとして公開された当時のKafkaもその一つでした。データを送る側 (Producer) で1回だけ送るというのが難しい為、受け取り側 (Consumer) 側で重複メッセージの処理を行う必要があります。 [^2]
 
 Kafkaが[Exactly Once Delivery](https://www.confluent.io/ja-jp/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/)機能をサポートしたのはバージョン0.11です。この頃より、結果整合性を前提としたソリューションの土台となり得るKafkaの利用が飛躍的に広がりました。
 
 Exactly Once Deliveryに関するKIPの正式名は[Exactly Once Delivery and Transactional Messaging](https://cwiki.apache.org/confluence/display/KAFKA/KIP-98+-+Exactly+Once+Delivery+and+Transactional+Messaging)であり、Idempotent Producerとトランザクションの双方を纏めて1つのKIPで定義しています。この為、Exactly Once Deliveryを達成する為には必ずトランザクションの導入が必要なよう誤解されている事も多いと思います。当然これら2つには強い関連性がある為同じKIP内で説明されていますが、それぞれ異なる機能であり、分解して理解する必要があります。
 
-Idempotent Producerについては[こちらのブログエントリ](../idempotent-producer-and-max-inflight/)でご紹介していますが、具体的にはProducerがKafkaに対してExactly Onceでメッセージを送る為に必要な機能であり、Kafkaトランザクション機能とは異なります。つまり明治的にトランザクションを使用しなくても、ProducerからKafkaへの書き込みはExactly Onceに指定できます。
+Idempotent Producerについては[こちらのブログエントリ](../idempotent-producer-and-max-inflight/)でご紹介していますが、具体的にはProducerがKafkaに対してExactly Onceでメッセージを送る為に必要な機能であり、Kafkaトランザクション機能とは異なります。つまり明示的にトランザクションを使用しなくても、ProducerからKafkaへの書き込みはExactly Onceに指定できます。
 
 ### Kafka Transaction
 Kafkaトランザクション自体はリレーショナルDBにおけるトランザクションと近い思想を持つもので、異なるエンティティへの書き込み処理をアトミックに扱える機能ですが、Kafkaの世界では対象がTopicとなります。つまり、異なるTopicへの書き込みをCommit/Abortする事ができる機能です。利用方法もリレーショナルDB APIへのプログラムアクセスと似ており：
