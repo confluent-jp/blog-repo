@@ -1,4 +1,54 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>hashi | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/authors/hashi/</link><atom:link href="https://confluent-jp.github.io/community/authors/hashi/index.xml" rel="self" type="application/rss+xml"/><description>hashi</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Sat, 09 Sep 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/authors/hashi/avatar_hudc0c7c8d0c95e5f09e296b73be3a2ab5_129312_270x270_fill_q75_lanczos_center.jpg</url><title>hashi</title><link>https://confluent-jp.github.io/community/authors/hashi/</link></image><item><title>KafkaとトランザクションとExactly Once</title><link>https://confluent-jp.github.io/community/blog/kafka-transaction-how-it-works/</link><pubDate>Sat, 09 Sep 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/kafka-transaction-how-it-works/</guid><description>&lt;h2 id="はじめに">はじめに&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>hashi | Confluent Japan Community</title><link>https://confluent-jp.github.io/community/authors/hashi/</link><atom:link href="https://confluent-jp.github.io/community/authors/hashi/index.xml" rel="self" type="application/rss+xml"/><description>hashi</description><generator>Wowchemy (https://wowchemy.com)</generator><language>ja-jp</language><lastBuildDate>Sun, 01 Oct 2023 00:00:00 +0000</lastBuildDate><image><url>https://confluent-jp.github.io/community/authors/hashi/avatar_hudc0c7c8d0c95e5f09e296b73be3a2ab5_129312_270x270_fill_q75_lanczos_center.jpg</url><title>hashi</title><link>https://confluent-jp.github.io/community/authors/hashi/</link></image><item><title>Confluent Cloud Q3'23 Launch</title><link>https://confluent-jp.github.io/community/blog/confluent-cloud-23q3-launch/</link><pubDate>Sun, 01 Oct 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/confluent-cloud-23q3-launch/</guid><description>&lt;p>Confluent Cloudはマネージドのプラットフォーム提供である為、様々な機能追加や改善は自動的に適用されます。これら改善はコアであるApache Kafkaのバージョンアップに限らず、またプラットフォーム製品であるConfluent Platformの機能にも限定されず、Confluent Cloud独自の機能も様々追加されています。&lt;/p>
+&lt;p>Quarterly Launchは、そんなConfluent Cloudの新規機能を四半期毎にまとめてご紹介する&lt;a href="https://www.confluent.io/blog/build-deploy-consume-data-pipelines/" target="_blank" rel="noopener">ブログ&lt;/a>と&lt;a href="https://www.youtube.com/watch?v=TS00diWO5Ak" target="_blank" rel="noopener">YouTube&lt;/a>エントリを指します。今回は&lt;a href="https://www.confluent.io/events/current/" target="_blank" rel="noopener">Current 2023&lt;/a>の開催を待った為だいぶ遅くなってしまいましたが、改めてそのハイライトをご紹介します。&lt;/p>
+&lt;h3 id="apache-flink-on-confluent-cloud-open-previewhttpswwwconfluentioblogbuild-deploy-consume-data-pipelinesflink-on-cloud">&lt;a href="https://www.confluent.io/blog/build-deploy-consume-data-pipelines/#flink-on-cloud" target="_blank" rel="noopener">Apache Flink® on Confluent Cloud (Open Preview)&lt;/a>&lt;/h3>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="Flink on Confluent Cloud" srcset="
+/community/media/blogs/confluent-cloud-23Q3-launch/flink-on-confluent-cloud_hu9a7990cce7b4fd1d129d17a5ccb1fd92_42892_1e22c54f68065fddec3fa2ce7b9ed953.webp 400w,
+/community/media/blogs/confluent-cloud-23Q3-launch/flink-on-confluent-cloud_hu9a7990cce7b4fd1d129d17a5ccb1fd92_42892_0bffbec27941e3f486699fef8632a7a8.webp 760w,
+/community/media/blogs/confluent-cloud-23Q3-launch/flink-on-confluent-cloud_hu9a7990cce7b4fd1d129d17a5ccb1fd92_42892_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/confluent-cloud-23Q3-launch/flink-on-confluent-cloud_hu9a7990cce7b4fd1d129d17a5ccb1fd92_42892_1e22c54f68065fddec3fa2ce7b9ed953.webp"
+width="600"
+height="315"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+来年サービス提供開始予定のApache Flink on Confluent Cloudがオープンプレビューとして公開されました。提供インターフェースはFlink SQLのみ。現時点では&lt;a href="https://docs.confluent.io/cloud/current/flink/reference/op-supported-features-and-limitations.html#feature-limitations" target="_blank" rel="noopener">既知の機能制限&lt;/a>があり、この為本番利用には向きません。また現時点で&lt;a href="https://docs.confluent.io/cloud/current/flink/reference/op-supported-features-and-limitations.html#cloud-regions" target="_blank" rel="noopener">利用可能なクラウド/リージョン&lt;/a>は限定的ではあります。ただ、今日もうお試しいただけます。&lt;/p>
+&lt;h3 id="enterprise-clustershttpswwwconfluentioblogbuild-deploy-consume-data-pipelinesenterprise-clusters">&lt;a href="https://www.confluent.io/blog/build-deploy-consume-data-pipelines/#enterprise-clusters" target="_blank" rel="noopener">Enterprise clusters&lt;/a>&lt;/h3>
+&lt;p>
+&lt;figure >
+&lt;div class="d-flex justify-content-center">
+&lt;div class="w-100" >&lt;img alt="Enterprise Clusters" srcset="
+/community/media/blogs/confluent-cloud-23Q3-launch/enterprise-clusters_hudcb5501b6a71e95e8db9e97022c961b4_156794_2d533c3cc14f04ebba6beda84afd4b62.webp 400w,
+/community/media/blogs/confluent-cloud-23Q3-launch/enterprise-clusters_hudcb5501b6a71e95e8db9e97022c961b4_156794_2108090c6b8fd26c6bbd9d7601804391.webp 760w,
+/community/media/blogs/confluent-cloud-23Q3-launch/enterprise-clusters_hudcb5501b6a71e95e8db9e97022c961b4_156794_1200x1200_fit_q75_h2_lanczos_3.webp 1200w"
+src="https://confluent-jp.github.io/community/community/media/blogs/confluent-cloud-23Q3-launch/enterprise-clusters_hudcb5501b6a71e95e8db9e97022c961b4_156794_2d533c3cc14f04ebba6beda84afd4b62.webp"
+width="760"
+height="380"
+loading="lazy" data-zoomable />&lt;/div>
+&lt;/div>&lt;/figure>
+Confluent Cloudのサーバーレスなクラスタ提供に新たにEnterpriseというオプションが追加されました。Basic、Standardといった既存のサーバーレスクラスタと異なり閉塞ネットワーク接続&lt;sup id="fnref:1">&lt;a href="#fn:1" class="footnote-ref" role="doc-noteref">1&lt;/a>&lt;/sup>を可能としており、併せて標準でSLA 99.99%、最大1GBpsのスループット(Ingress/Egress合算)をサポートしています。&lt;/p>
+&lt;p>残念ながらローンチ時点ではサポートされているリージョンは限定的&lt;sup id="fnref:2">&lt;a href="#fn:2" class="footnote-ref" role="doc-noteref">2&lt;/a>&lt;/sup>ですが、以降継続して拡張予定となっています。&lt;/p>
+&lt;h3 id="confluent-terraform-provider-updateshttpswwwconfluentioblogbuild-deploy-consume-data-pipelinesconfluent-terraform-provider">&lt;a href="https://www.confluent.io/blog/build-deploy-consume-data-pipelines/#confluent-terraform-provider" target="_blank" rel="noopener">Confluent Terraform provider updates&lt;/a>&lt;/h3>
+&lt;p>Confluent Terraform ProviderがHashiCorp Sentinel統合をサポートしました。これによりPolicy-as-Codeによる運用にConfluent Cloudを統合することが可能となります。&lt;/p>
+&lt;p>また、新たにResource Importer機能を提供開始しました。これにより既存のConfluent CloudからTerraformの構成 (main.tf) ならびに状態 (terraform.tfstate) を逆生成する事が可能となります。&lt;/p>
+&lt;h3 id="その他">その他&lt;/h3>
+&lt;ul>
+&lt;li>先日発表した&lt;a href="../confluent-platform-7.5-announcement/">Confluent Platform 7.5&lt;/a>でもご紹介した双方向Cluster LinkingがConfluent Cloudでもサポートされております。&lt;/li>
+&lt;li>PrivateLink接続のConfluent Cloudクラスタ同士を&lt;a href="https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/private-networking.html" target="_blank" rel="noopener">直接Cluster Linkingで接続可能&lt;/a>することが可能となりました。&lt;/li>
+&lt;/ul>
+&lt;p>その他にも新たな機能が追加されておりますが、その全貌ならびに個々の詳細につきましては&lt;a href="https://www.confluent.io/blog/build-deploy-consume-data-pipelines/" target="_blank" rel="noopener">Confluentブログのアナウンスメント&lt;/a>をご覧ください。&lt;/p>
+&lt;div class="footnotes" role="doc-endnotes">
+&lt;hr>
+&lt;ol>
+&lt;li id="fn:1">
+&lt;p>2023年9月ローンチ時点では、AWS PrivateLink経由の接続のみサポートしております。その他クラウドの接続形態は後日提供となります。&amp;#160;&lt;a href="#fnref:1" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li id="fn:2">
+&lt;p>2023年9月ローンチ時点では、AWSのus-east-2(Ohio)、us-west-2(Oregon)、ap-southeast-1(Singapore)等8リージョンでのみ提供開始となっています。日本リージョンでの利用開始は現時点では未定です。&amp;#160;&lt;a href="#fnref:2" class="footnote-backref" role="doc-backlink">&amp;#x21a9;&amp;#xfe0e;&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;/div></description></item><item><title>KafkaとトランザクションとExactly Once</title><link>https://confluent-jp.github.io/community/blog/kafka-transaction-how-it-works/</link><pubDate>Sat, 09 Sep 2023 00:00:00 +0000</pubDate><guid>https://confluent-jp.github.io/community/blog/kafka-transaction-how-it-works/</guid><description>&lt;h2 id="はじめに">はじめに&lt;/h2>
 &lt;p>Kafkaの利用は&lt;a href="https://www.youtube.com/watch?v=9uCP3qHNbWw" target="_blank" rel="noopener">結果整合性&lt;/a>の概念の浸透とその実践的な活用ユースケースの登場によって飛躍的に広がりました。それまでのリレーショナルモデルに見られる&lt;a href="https://ja.wikipedia.org/wiki/ACID_%28%E3%82%B3%E3%83%B3%E3%83%94%E3%83%A5%E3%83%BC%E3%82%BF%E7%A7%91%E5%AD%A6%29" target="_blank" rel="noopener">ACID特性&lt;/a>を前提とした整合性の管理ではなく、&lt;a href="https://martin.kleppmann.com/2015/06/02/change-capture-at-berlin-buzzwords.html" target="_blank" rel="noopener">Change Data Capture&lt;/a>によって整合性を整理するという大きく異なるアプローチであり、既存の概念に挑戦するものでした。&lt;/p>
 &lt;p>リレーショナルモデルにおけるトランザクションではない「今ではない近い将来にはデータは整合性を保った状態で連携先に届く」というアプローチである為、Change Data Captureを活用したソリューションにトランザクションの概念が登場すると混乱を招く事も多くあります。&lt;/p>
 &lt;p>Kafkaもトランザクションをサポートしており、データを整合性を保ったままリアルタイムに扱う上で非常に重要な概念です。しかしながら、Kafkaのトランザクションの目的はリレーショナルモデルのそれとは大きく異なります。&lt;/p>
