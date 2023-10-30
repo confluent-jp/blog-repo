@@ -20,11 +20,11 @@ url_pdf: ''
 url_slides: ''
 url_video: ''
 ---
-Apache Flinkの新バージョン1.18が公開されました。[Conflunet Blog](https://www.confluent.io/blog/announcing-apache-flink-1-18/)ではその具体的な改善点をエリア毎に詳しく説明しており、ConfluentだけでなくVerverica、Aiven、Alibaba CloudのFlinkコミッターも共著として参加し、結果としてFlinkの情報発信として非常なものとなっております。
+Apache Flinkの新バージョン1.18が公開されました。[Conflunet Blog](https://www.confluent.io/blog/announcing-apache-flink-1-18/)ではその具体的な改善点をエリア毎に詳しく説明しており、ConfluentだけでなくVerverica、Aiven、Alibaba CloudのFlinkコミッターも共著として参加し、結果としてFlinkの情報発信として非常に有益なものとなっています。
 
-昨年発表されたAkkaのライセンス変更に伴い、[1年前にAkkaの代替模索に入った](https://flink.apache.org/2022/09/08/regarding-akkas-licensing-change/)Flinkプロジェクト。ようやくAkkaから[Apache Pekko](https://pekko.apache.org/)に切り替えた節目のリリースとなりました。一方、ストリーム処理/バッチ処理を含め、Flinkのストリーム処理基盤としての成熟度がさらに増す多くの改善も含まれています。
+昨年発表されたAkkaのライセンス変更に伴い、[1年前にAkkaの代替模索に入った](https://flink.apache.org/2022/09/08/regarding-akkas-licensing-change/)Flinkプロジェクト。ようやくAkkaから[Apache Pekko](https://pekko.apache.org/)に切り替えた節目のリリースとなりました。
 
-本エントリでは、一部ではありますがそのうちの幾つかをご紹介します。
+併せて、ストリーム処理/バッチ処理改善等Flinkのストリーム処理基盤としての成熟度がさらに増す多くの改善も含まれています。本エントリでは、一部ではありますがそのうちの幾つかをご紹介します。
 
 ### [FLIP-293: Introduce Flink Jdbc Driver For Sql Gateway](https://cwiki.apache.org/confluence/display/FLINK/FLIP-293%3A+Introduce+Flink+Jdbc+Driver+For+Sql+Gateway)
 FlinkクラスタへのRESTエンドポイントを提供する[Flink SQL Ga†eway](https://github.com/ververica/flink-sql-gateway/blob/master/README.md)に、新たに汎用的なJDBC経由で通信できる[Flink JDBC Driver](https://github.com/ververica/flink-jdbc-driver)が接続出来るようになりました。
