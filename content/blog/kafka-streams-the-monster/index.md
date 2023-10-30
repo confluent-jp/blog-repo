@@ -10,8 +10,8 @@ categories:
   - Blog
   - Kafka Strams
 projects: 
-date: '2024-01-01T00:00:00Z'
-lastmod: '2024-01-01T00:00:00Z'
+date: '2030-01-01T00:00:00Z'
+lastmod: '2030-01-01T00:00:00Z'
 ---
 
 ## はじめに

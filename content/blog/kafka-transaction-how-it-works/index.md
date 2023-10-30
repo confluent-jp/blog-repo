@@ -84,7 +84,7 @@ SourceはProducerとして機能し、DBやダッシュボードへの転送はS
 
 Kafka Consumerは、メッセージの処理後にConsumer Offsetを```commitSync/commitAsync```というメソッドを使って更新します。このオフセットコミットが行われる事により、仮に処理後にConsumerのプロセスが落ちたとしても、新しいプロセスが引き継いで処理を継続する事が出来ます。
 
-しかしながら、処理後 (ストリーム処理ではConsumeし、データの処理を実行し、別のTopicにProduce後) に何らかの障害によってプロセスを失った場合、引き継いだプロセスはコミットされる前のオフセットをもとに処理、つまり同じメッセージを消費し再処理することとなります。これではProduceに関してはIdempotent Producerの設定によってExactly OnceでKafkaに書き込めても、End-to-EndのフローではExcatly Onceを保証出来ません。
+しかしながら、処理後 (ストリーム処理ではConsumeし、データの処理を実行し、別のTopicにProduce前) に何らかの障害によってプロセスを失った場合、引き継いだプロセスはコミットされる前のオフセットをもとに処理、つまり同じメッセージを消費し再処理することとなります。これではProduceに関してはIdempotent Producerの設定によってExactly OnceでKafkaに書き込めても、End-to-EndのフローではExcatly Onceを保証出来ません。
 
 ![ストリーム処理とトランザクション](blogs/kafka-transaction-how-it-works/topics-and-transaction.png)
 
