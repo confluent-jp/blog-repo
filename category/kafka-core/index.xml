@@ -108,7 +108,7 @@ loading="lazy" data-zoomable />&lt;/div>
 &lt;h3 id="exactly-once">Exactly Once&lt;/h3>
 &lt;p>この処理のEnd-to-EndでExactly Onceを達成するには？という命題の為にKafka Transactionは定義されています。&lt;/p>
 &lt;p>Kafka Consumerは、メッセージの処理後にConsumer Offsetを&lt;code>commitSync/commitAsync&lt;/code>というメソッドを使って更新します。このオフセットコミットが行われる事により、仮に処理後にConsumerのプロセスが落ちたとしても、新しいプロセスが引き継いで処理を継続する事が出来ます。&lt;/p>
-&lt;p>しかしながら、処理後 (ストリーム処理ではConsumeし、データの処理を実行し、別のTopicにProduce後) に何らかの障害によってプロセスを失った場合、引き継いだプロセスはコミットされる前のオフセットをもとに処理、つまり同じメッセージを消費し再処理することとなります。これではProduceに関してはIdempotent Producerの設定によってExactly OnceでKafkaに書き込めても、End-to-EndのフローではExcatly Onceを保証出来ません。&lt;/p>
+&lt;p>しかしながら、処理後 (ストリーム処理ではConsumeし、データの処理を実行し、別のTopicにProduce前) に何らかの障害によってプロセスを失った場合、引き継いだプロセスはコミットされる前のオフセットをもとに処理、つまり同じメッセージを消費し再処理することとなります。これではProduceに関してはIdempotent Producerの設定によってExactly OnceでKafkaに書き込めても、End-to-EndのフローではExcatly Onceを保証出来ません。&lt;/p>
 &lt;p>
 &lt;figure >
 &lt;div class="d-flex justify-content-center">
