@@ -64,7 +64,7 @@ FROM Clickstream
 WHERE STATUS = '404'
 EMIT CHANGES;
 ```
-ここでは前述した```Clickstream```というStreamから必要なカラムを指定してSELECTした結果を新たなStreamとして定義する処理です。ここではWHERE句を利用してフィルタリングした結果のみ抽出し、かつ新たに```404events```というTopicに対して出力しています。物理的には```datagen-topic``` にあるデータが変換/加工され```404events```という新たなTopicに登録されます。
+ここでは前述した```Clickstream```というStreamから必要なカラムを指定してSELECTした結果を新たなStreamとして定義する処理です。さらにWHERE句を利用してフィルタリングした結果のみ抽出し、かつ新たに```404events```というTopicに対して出力しています。物理的には```datagen-topic``` にあるデータが変換/加工され```404events```という新たなTopicに登録されています。
 
 当然この構文はksqlDBでのストリーム処理には頻出構文であり、CSAS (```CREATE STREAM AS SELECT```)、CTAS (```CREATE TABLE AS SELECT```)と呼ばれます。
 
@@ -130,7 +130,9 @@ EMIT CHANGES;
 
 KeyをValueにコピーする関数は存在し、[AS_VALUE](https://docs.ksqldb.io/en/latest/developer-guide/ksqldb-reference/scalar-functions/#as_value)関数を利用すればコピー出来ます。
 
-しかしながら、```AS_VALUE```はTableを前提とした関数であり、Tableには明示的に PRIMARY KEYを指定するのでKeyとそのフィールド名も参照出来ますが、Streamの場合にはKeyは必須ではありません。また、先程の```Key```を利用した```CREATE STREAM```の結果にあるように、Keyには値のみ、ここでは```IP```で指定した値のみが入っています。なので```AS_VALUE```を```ROWKEY```に対して実行したいのですが：
+しかしながら、```AS_VALUE```はTableを前提とした関数であり、Tableには明示的に PRIMARY KEYを指定するのでKeyとそのフィールド名も参照出来ます。しかしながら、Streamの場合にはKeyは必須ではなく、先程の```Key```を利用した結果にあるように、Keyには値のみ、値のみがKeyに移ります。（この例では```IP```のフィールド。）
+
+PRIMARY KEYの様にフィールド名を指定して```AS_VALUE```を使いたい、つまり```ROWKEY```に対して```AS_VALUE```を実行したいのですが：
 ```sql
 CREATE STREAM TransformedEventsWithKey
 WITH (KAFKA_TOPIC='events-with-key', VALUE_FORMAT='JSON')
@@ -143,7 +145,7 @@ AS SELECT
 FROM ClickstreamWithKey
 EMIT CHANGES;
 ```
-このクエリは構文エラーとなります。```AS_VALUE```はTableの```PRIMARY KEY```は引数として受け付けますが、値だけのROWKEYは受け付けません。つまり```AS_VALUE```は通常の使用法ではStreamに対しては利用出来ません。[^2]
+このクエリは構文エラーとなります。```AS_VALUE```はTableの```PRIMARY KEY```は引数として受け付けますが、値だけのROWKEYは受け付けません。つまり```AS_VALUE```は通常の使用法ではStreamに対しては利用出来無いことになります。[^2]
 
 ハックとしての解答は以下になります：
 ```sql
@@ -160,13 +162,15 @@ FROM ClickstreamWithKey
 EMIT CHANGES;
 ```
 ```ROWKEY```に対して```IP```というフィールド名を割り当て、そのフィールドを```AS_VALUE```で利用する方法になります。上記クエリを分解解釈すると以下となります：
-- StreamにはないPrimary Keyのフィールドを```IP```として明示的に指定。
+- StreamにはないPRIMARY KEYのフィールドを```IP```として明示的に指定。
 - そのフィールドを```AS_VALUE```で参照。この際元々あるフィールドと同名で定義。
 
 妙な構文になりますが、結果は：
 ![CREATE STREAM with Key and Value - Key](blogs/handling-keys-in-ksql/withkeyvalue-key.png)
 ![CREATE STREAM with Key and Value - Value](blogs/handling-keys-in-ksql/withkeyvalue-value.png)
 と期待通りの結果となります。
+
+こちらの一連の動きが確認出来る[デモスクリプト](https://github.com/confluent-jp/demo-cc-ksqldb-handling-keys)を用意しました。是非実際に動かして挙動を確かめてください。
 
 ## おわりに
 このハック的なアプローチを見ると「ksqlDBは面倒くさい。直感的ではない。」と思うかも知れません。確かにハックだけを見るとその通りで、無意味な制約のようにも思えます。しかしながらこれには背景があり、より直感的なデータモデル定義へと変更した事による副作用である事を理解して頂ければと思います。また、ksqlDB、というよりデータフロー処理内でKeyを参照するというのは特殊な要件です。このハックを怪しい要件/ロジックのスメルと捉える事もできます。
