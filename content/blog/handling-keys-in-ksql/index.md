@@ -1,6 +1,6 @@
 ---
-title: ストリーム処理でKafka TopicのKeyを扱う in KSQL
-summary: ksqlDBにおけるストリーム処理の概念と、ストリーム処理でTopicのKeyを扱う方法について。
+title: ストリーム処理でKafka TopicのKeyを扱う in KSQL with デモスクリプト
+summary: ksqlDBにおけるストリーム処理の概念と、ストリーム処理でTopicのKeyを扱う方法について。試して理解出来るデモスクリプト付き。
 authors:
   - hashi
 tags:
