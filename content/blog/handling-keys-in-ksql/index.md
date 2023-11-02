@@ -46,7 +46,9 @@ KAFKA_TOPIC='datagen-topic', VALUE_FORMAT='JSON');
 ここでは```datagen-topic```というJSONでシリアライズされたTopicに対して```Clickstream```という名前のStreamデータモデルを定義しています。
 
 #### CSASとCTAS
-Topicをモデル化したStreamやTableを定義したとして、今度はそのモデルに対して処理をする必要性が出てきます。一般的なデータフロープログラミングのモデルではプログラム内で処理をチェイニングした結果を別Topicに出力しますが、SQLにはそのような構文モデルはありません。一方リレーショナルDBではストアドプロシージャを利用しますが、DB毎にその仕様は異なります。
+Topicをモデル化したStreamやTableを定義したとして、今度はそのモデルに対して処理をする必要性が出てきます。
+
+一般的なデータフロープログラミングのモデルではプログラム内で処理をチェイニングした結果を別Topicに出力しますが、SQLにはそのような構文モデルはありません。一方リレーショナルDBではストアドプロシージャ等を利用しますが、DB毎にその仕様は異なります。ksqlDBではSQLに近い構文でありながら、かつより汎用的な方法でデータの加工処理とストアを結び付ける必要があります。
 
 ksqlDBではもっと汎用的な```SELECT```と```CREATE STREAM```を組み合わせる事により処理とストアを結びつけます。具体的には```CREATE STREAM AS SELECT```構文を利用します。
 ```sql
@@ -62,7 +64,7 @@ FROM Clickstream
 WHERE STATUS = '404'
 EMIT CHANGES;
 ```
-ここでは前述した```Clickstream```というStreamから必要なカラムを指定してSELECTした結果を新たなStreamとして定義する処理です。ここではWHERE句を利用してフィルタリングした結果のみ抽出し、かつ新たに```404events```というTopicに対して出力しています。物理的には```Clickstream```に紐付く```datagen-topic``` Topicにあるデータが変換/加工され```404events```という新たなTopicに登録されます。
+ここでは前述した```Clickstream```というStreamから必要なカラムを指定してSELECTした結果を新たなStreamとして定義する処理です。ここではWHERE句を利用してフィルタリングした結果のみ抽出し、かつ新たに```404events```というTopicに対して出力しています。物理的には```datagen-topic``` にあるデータが変換/加工され```404events```という新たなTopicに登録されます。
 
 当然この構文はksqlDBでのストリーム処理には頻出構文であり、CSAS (```CREATE STREAM AS SELECT```)、CTAS (```CREATE TABLE AS SELECT```)と呼ばれます。
 
@@ -128,7 +130,7 @@ EMIT CHANGES;
 
 KeyをValueにコピーする関数は存在し、[AS_VALUE](https://docs.ksqldb.io/en/latest/developer-guide/ksqldb-reference/scalar-functions/#as_value)関数を利用すればコピー出来ます。
 
-しかしながら、```AS_VALUE```はTableを前提とした関数であり、Tableには明示的に PRIMARYKEYを指定するのでKeyとそのフィールド名も参照出来ますが、Streamの場合にはKeyは必須ではありません。また、先程の```Key```を利用した```CREATE STREAM```の結果にあるように、Keyには値のみ、ここでは```IP```で指定した値のみが入っています。なので```AS_VALUE```を```ROWKEY```に対して実行したいのですが：
+しかしながら、```AS_VALUE```はTableを前提とした関数であり、Tableには明示的に PRIMARY KEYを指定するのでKeyとそのフィールド名も参照出来ますが、Streamの場合にはKeyは必須ではありません。また、先程の```Key```を利用した```CREATE STREAM```の結果にあるように、Keyには値のみ、ここでは```IP```で指定した値のみが入っています。なので```AS_VALUE```を```ROWKEY```に対して実行したいのですが：
 ```sql
 CREATE STREAM TransformedEventsWithKey
 WITH (KAFKA_TOPIC='events-with-key', VALUE_FORMAT='JSON')
