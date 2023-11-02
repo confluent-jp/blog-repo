@@ -38,7 +38,7 @@
 &lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="k">FROM&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Clickstream&lt;/span>&lt;span class="w">
 &lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="k">WHERE&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">STATUS&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s1">&amp;#39;404&amp;#39;&lt;/span>&lt;span class="w">
 &lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="n">EMIT&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">CHANGES&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
-&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>ここでは前述した&lt;code>Clickstream&lt;/code>というStreamから必要なカラムを指定してSELECTした結果を新たなStreamとして定義する処理です。ここではWHERE句を利用してフィルタリングした結果のみ抽出し、かつ新たに&lt;code>404events&lt;/code>というTopicに対して出力しています。物理的には&lt;code>datagen-topic&lt;/code> にあるデータが変換/加工され&lt;code>404events&lt;/code>という新たなTopicに登録されます。&lt;/p>
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>ここでは前述した&lt;code>Clickstream&lt;/code>というStreamから必要なカラムを指定してSELECTした結果を新たなStreamとして定義する処理です。さらにWHERE句を利用してフィルタリングした結果のみ抽出し、かつ新たに&lt;code>404events&lt;/code>というTopicに対して出力しています。物理的には&lt;code>datagen-topic&lt;/code> にあるデータが変換/加工され&lt;code>404events&lt;/code>という新たなTopicに登録されています。&lt;/p>
 &lt;p>当然この構文はksqlDBでのストリーム処理には頻出構文であり、CSAS (&lt;code>CREATE STREAM AS SELECT&lt;/code>)、CTAS (&lt;code>CREATE TABLE AS SELECT&lt;/code>)と呼ばれます。&lt;/p>
 &lt;h4 id="keyとデータモデル">Keyとデータモデル&lt;/h4>
 &lt;p>&lt;code>CREATE STREAM&lt;/code>と&lt;code>CREATE TABLE&lt;/code>ではTopicのKeyの扱い方が異なります。&lt;/p>
@@ -129,7 +129,8 @@ loading="lazy" data-zoomable />&lt;/div>
 &lt;p>先述した通り、StreamにおいてKeyを扱う事は混乱を招く恐れがある為、JOIN等明確な利用がある場合のみに利用する事が推奨されます。それでもJoinもするがValueの中でもKeyを参照する、つまりksqlDB内でKeyを参照したいというユースケースも存在します。&lt;/p>
 &lt;p>この場合、KeyのコピーをValue内に持たせるする必要がありますが、ハックに近い対応が必要となります。&lt;/p>
 &lt;p>KeyをValueにコピーする関数は存在し、&lt;a href="https://docs.ksqldb.io/en/latest/developer-guide/ksqldb-reference/scalar-functions/#as_value" target="_blank" rel="noopener">AS_VALUE&lt;/a>関数を利用すればコピー出来ます。&lt;/p>
-&lt;p>しかしながら、&lt;code>AS_VALUE&lt;/code>はTableを前提とした関数であり、Tableには明示的に PRIMARY KEYを指定するのでKeyとそのフィールド名も参照出来ますが、Streamの場合にはKeyは必須ではありません。また、先程の&lt;code>Key&lt;/code>を利用した&lt;code>CREATE STREAM&lt;/code>の結果にあるように、Keyには値のみ、ここでは&lt;code>IP&lt;/code>で指定した値のみが入っています。なので&lt;code>AS_VALUE&lt;/code>を&lt;code>ROWKEY&lt;/code>に対して実行したいのですが：&lt;/p>
+&lt;p>しかしながら、&lt;code>AS_VALUE&lt;/code>はTableを前提とした関数であり、Tableには明示的に PRIMARY KEYを指定するのでKeyとそのフィールド名も参照出来ます。しかしながら、Streamの場合にはKeyは必須ではなく、先程の&lt;code>Key&lt;/code>を利用した結果にあるように、Keyには値のみ、値のみがKeyに移ります。（この例では&lt;code>IP&lt;/code>のフィールド。）&lt;/p>
+&lt;p>PRIMARY KEYの様にフィールド名を指定して&lt;code>AS_VALUE&lt;/code>を使いたい、つまり&lt;code>ROWKEY&lt;/code>に対して&lt;code>AS_VALUE&lt;/code>を実行したいのですが：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-sql" data-lang="sql">&lt;span class="line">&lt;span class="cl">&lt;span class="k">CREATE&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">STREAM&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">TransformedEventsWithKey&lt;/span>&lt;span class="w">
 &lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="k">WITH&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">KAFKA_TOPIC&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s1">&amp;#39;events-with-key&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">VALUE_FORMAT&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s1">&amp;#39;JSON&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
 &lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="k">AS&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">SELECT&lt;/span>&lt;span class="w">
@@ -140,7 +141,7 @@ loading="lazy" data-zoomable />&lt;/div>
 &lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="n">BYTES&lt;/span>&lt;span class="w">
 &lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="k">FROM&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ClickstreamWithKey&lt;/span>&lt;span class="w">
 &lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="n">EMIT&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">CHANGES&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
-&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>このクエリは構文エラーとなります。&lt;code>AS_VALUE&lt;/code>はTableの&lt;code>PRIMARY KEY&lt;/code>は引数として受け付けますが、値だけのROWKEYは受け付けません。つまり&lt;code>AS_VALUE&lt;/code>は通常の使用法ではStreamに対しては利用出来ません。&lt;sup id="fnref:2">&lt;a href="#fn:2" class="footnote-ref" role="doc-noteref">2&lt;/a>&lt;/sup>&lt;/p>
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>このクエリは構文エラーとなります。&lt;code>AS_VALUE&lt;/code>はTableの&lt;code>PRIMARY KEY&lt;/code>は引数として受け付けますが、値だけのROWKEYは受け付けません。つまり&lt;code>AS_VALUE&lt;/code>は通常の使用法ではStreamに対しては利用出来無いことになります。&lt;sup id="fnref:2">&lt;a href="#fn:2" class="footnote-ref" role="doc-noteref">2&lt;/a>&lt;/sup>&lt;/p>
 &lt;p>ハックとしての解答は以下になります：&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" class="chroma">&lt;code class="language-sql" data-lang="sql">&lt;span class="line">&lt;span class="cl">&lt;span class="k">CREATE&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">STREAM&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">TransformedEventsWithKey&lt;/span>&lt;span class="w">
 &lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="k">WITH&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">KAFKA_TOPIC&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s1">&amp;#39;events-with-key&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">VALUE_FORMAT&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s1">&amp;#39;JSON&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
@@ -155,7 +156,7 @@ loading="lazy" data-zoomable />&lt;/div>
 &lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="n">EMIT&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">CHANGES&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
 &lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>ROWKEY&lt;/code>に対して&lt;code>IP&lt;/code>というフィールド名を割り当て、そのフィールドを&lt;code>AS_VALUE&lt;/code>で利用する方法になります。上記クエリを分解解釈すると以下となります：&lt;/p>
 &lt;ul>
-&lt;li>StreamにはないPrimary Keyのフィールドを&lt;code>IP&lt;/code>として明示的に指定。&lt;/li>
+&lt;li>StreamにはないPRIMARY KEYのフィールドを&lt;code>IP&lt;/code>として明示的に指定。&lt;/li>
 &lt;li>そのフィールドを&lt;code>AS_VALUE&lt;/code>で参照。この際元々あるフィールドと同名で定義。&lt;/li>
 &lt;/ul>
 &lt;p>妙な構文になりますが、結果は：
@@ -182,6 +183,7 @@ height="230"
 loading="lazy" data-zoomable />&lt;/div>
 &lt;/div>&lt;/figure>
 と期待通りの結果となります。&lt;/p>
+&lt;p>こちらの一連の動きが確認出来る&lt;a href="https://github.com/confluent-jp/demo-cc-ksqldb-handling-keys" target="_blank" rel="noopener">デモスクリプト&lt;/a>を用意しました。是非実際に動かして挙動を確かめてください。&lt;/p>
 &lt;h2 id="おわりに">おわりに&lt;/h2>
 &lt;p>このハック的なアプローチを見ると「ksqlDBは面倒くさい。直感的ではない。」と思うかも知れません。確かにハックだけを見るとその通りで、無意味な制約のようにも思えます。しかしながらこれには背景があり、より直感的なデータモデル定義へと変更した事による副作用である事を理解して頂ければと思います。また、ksqlDB、というよりデータフロー処理内でKeyを参照するというのは特殊な要件です。このハックを怪しい要件/ロジックのスメルと捉える事もできます。&lt;/p>
 &lt;p>何より、やや面倒くさいksqlDBにおけるKeyの扱いを理解すると、ksqlDBの仕組みやデータモデルへの理解が深まります。ksqlDBの裏側を少し垣間見る機会と思って頂ければ幸いです。&lt;/p>
